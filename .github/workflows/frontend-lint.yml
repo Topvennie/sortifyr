@@ -1,0 +1,35 @@
+name: Frontend Lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  format-and-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 24.8.0
+
+      - name: Install pnpm
+        run: npm install -g pnpm@10.16.1
+
+      - name: Install dependencies
+        run: pnpm install
+        working-directory: ui/
+
+      - name: Run format & lint
+        run: pnpm run lint
+        working-directory: ui/
+
+      - name: Run typecheck
+        run: pnpm run typecheck
+        working-directory: ui/

@@ -1,0 +1,12 @@
+name: sqlc
+on: [push]
+
+jobs:
+  diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: sqlc-dev/setup-sqlc@v3
+        with:
+          sqlc-version: "1.30.0"
+      - run: sqlc diff

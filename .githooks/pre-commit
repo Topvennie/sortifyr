@@ -1,0 +1,22 @@
+#!/bin/bash
+
+echo "Backend linting"
+golangci-lint run
+if [ $? -ne 0 ]; then
+  echo "golangci-lint failed."
+  exit 1
+fi
+
+echo "Frontend linting"
+(cd ui && pnpm --silent run lint)
+if [ $? -ne 0 ]; then
+  echo "Frontend linting failed."
+  exit 1
+fi
+
+echo "Frontend typecheck"
+(cd ui && pnpm --silent run typecheck)
+if [ $? -ne 0 ]; then
+  echo "Frontend type checking failed."
+  exit 1
+fi

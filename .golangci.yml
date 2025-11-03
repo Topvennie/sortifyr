@@ -1,0 +1,139 @@
+version: "2"
+
+run:
+  issues-exit-code: 1
+  tests: true
+  timeout: 5m
+  modules-download-mode: readonly
+
+output:
+  formats:
+    text:
+      path: stdout
+      print-linter-name: true
+      print-issued-lines: true
+
+linters:
+  default: none
+  enable:
+    - bodyclose
+    - copyloopvar
+    - errcheck
+    - errchkjson
+    - errorlint
+    - exhaustive
+    - gocognit
+    - goconst
+    - gocritic
+    - gosec
+    - govet
+    - loggercheck
+    - perfsprint
+    - prealloc
+    - revive
+    - staticcheck
+    - unconvert
+    - unused
+
+  settings:
+    copyloopvar:
+      check-alias: true
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+      exclude-functions:
+        - (io.ReadCloser).Close
+    errchkjson:
+      report-no-exported: true
+    exhaustive:
+      default-signifies-exhaustive: true
+    gocognit:
+      min-complexity: 30
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+    gocritic:
+      disabled-checks:
+        - hugeParam
+        - importShadow
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
+    gosec:
+      excludes:
+        - G104
+        - G107
+        - G115
+        - G304
+    loggercheck:
+      kitlog: false
+      klog: false
+      logr: false
+      slog: false
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: dot-imports
+        - name: empty-block
+        - name: error-naming
+        - name: error-return
+        - name: error-strings
+        - name: errorf
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: range
+        - name: receiver-naming
+        - name: redefines-builtin-id
+        - name: superfluous-else
+        - name: time-naming
+        - name: unexported-return
+        - name: unreachable-code
+        - name: unused-parameter
+        - name: var-declaration
+        - name: var-naming
+          arguments:
+            - []
+            - []
+            - - skip-package-name-checks: true
+
+  exclusions:
+    generated: lax
+    rules:
+      - linters:
+          - dupl
+          - errcheck
+          - funlen
+          - gocyclo
+          - gosec
+        path: _test\.go
+      - linters:
+          - lll
+        source: "^//go:generate "
+    paths:
+      - pkg/sqlc
+      - third_party$
+      - builtin$
+      - examples$
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+  settings:
+    gofmt:
+      simplify: true
+
+  exclusions:
+    generated: lax
+    paths:
+      - pkg/sqlc
+      - third_party$
+      - builtin$
+      - examples$

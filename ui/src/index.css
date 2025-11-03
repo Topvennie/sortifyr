@@ -1,0 +1,12 @@
+@layer theme, base, mantine, components, utilities;
+
+@import 'tailwindcss';
+@import '@mantine/core/styles.layer.css';
+
+@layer base {
+}
+
+@theme {
+  --breakpoint-3xl: 142em;
+  --breakpoint-4xl: 172em;
+}

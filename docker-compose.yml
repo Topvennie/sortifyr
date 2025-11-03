@@ -1,0 +1,96 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: spotify_organizer
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5431:5432"
+
+  redis:
+    image: redis:8-alpine
+    volumes:
+      - redis_data:/data
+
+  minio:
+    image: quay.io/minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: miniominio
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9001:9001"
+
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc config host add myminio http://minio:9000 minio miniominio;
+      /usr/bin/mc mb -p myminio/spotify_organizer;
+      exit 0;
+      "
+
+  backend:
+    build:
+      dockerfile: Dockerfile.dev
+    command: sh -c "go mod tidy && air -c .air.toml"
+    ports:
+      - 3001:3001
+    environment:
+      - INFISICAL_TOKEN
+      - INFISICAL_API_URL
+    volumes:
+      - .:/backend
+      - /backend/ui
+      - backend_packages:/go/pkg/mod
+    depends_on:
+      - db
+      - redis
+      - minio
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build:
+      context: ui
+      dockerfile: Dockerfile.dev
+    ports:
+      - 3000:3000
+    volumes:
+      - ./ui:/frontend
+      - frontend_packages:/frontend/node_modules
+    depends_on:
+      - backend
+
+  seed:
+    build:
+      dockerfile: Dockerfile.dev
+    command: sh -c "go build -o seed ./cmd/seed/ && ./seed"
+    restart: no
+    environment:
+      - INFISICAL_TOKEN
+      - INFISICAL_API_URL
+    volumes:
+      - .:/backend
+      - /backend/ui
+      - backend_packages:/go/pkg/mod
+    depends_on:
+      - db
+      - redis
+      - minio
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  db_data:
+  redis_data:
+  minio_data:
+  backend_packages:
+  frontend_packages:
