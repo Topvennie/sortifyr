@@ -7,6 +7,9 @@ name = "spotify_organizer"
 [db]
 host = "db"
 
+[redis]
+url = "redis://default@redis:6379"
+
 [auth]
 redirect_url = "http://127.0.0.1:3000"
 

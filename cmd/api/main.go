@@ -9,6 +9,7 @@ import (
 	"github.com/topvennie/spotify_organizer/pkg/config"
 	"github.com/topvennie/spotify_organizer/pkg/db"
 	"github.com/topvennie/spotify_organizer/pkg/logger"
+	"github.com/topvennie/spotify_organizer/pkg/redis"
 	"github.com/topvennie/spotify_organizer/pkg/storage"
 	"go.uber.org/zap"
 )
@@ -32,6 +33,10 @@ func main() {
 
 	if err = storage.New(db.Pool()); err != nil {
 		zap.S().Fatalf("Failed to create storage %v", err)
+	}
+
+	if err = redis.New(); err != nil {
+		zap.S().Fatalf("Failed to connect to redis %v", err)
 	}
 
 	repo := repository.New(db)
