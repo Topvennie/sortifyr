@@ -32,7 +32,7 @@ func (u *User) GetByID(ctx context.Context, id int) (dto.User, error) {
 		return dto.User{}, fiber.ErrNotFound
 	}
 
-	return dto.UserDTO(*user), nil
+	return dto.UserDTO(user), nil
 }
 
 func (u *User) GetByUID(ctx context.Context, uid string) (dto.User, error) {
@@ -45,12 +45,24 @@ func (u *User) GetByUID(ctx context.Context, uid string) (dto.User, error) {
 		return dto.User{}, fiber.ErrNotFound
 	}
 
-	return dto.UserDTO(*user), nil
+	return dto.UserDTO(user), nil
 }
 
-func (u *User) Save(ctx context.Context, userSave dto.User) (dto.User, error) {
+func (u *User) Create(ctx context.Context, userSave dto.User) (dto.User, error) {
 	user := userSave.ToModel()
-	if err := u.user.Create(ctx, &user); err != nil {
+
+	if err := u.user.Create(ctx, user); err != nil {
+		zap.S().Error(err)
+		return dto.User{}, fiber.ErrInternalServerError
+	}
+
+	return dto.UserDTO(user), nil
+}
+
+func (u *User) Update(ctx context.Context, userSave dto.User) (dto.User, error) {
+	user := userSave.ToModel()
+
+	if err := u.user.Update(ctx, *user); err != nil {
 		zap.S().Error(err)
 		return dto.User{}, fiber.ErrInternalServerError
 	}

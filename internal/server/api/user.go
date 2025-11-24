@@ -7,7 +7,8 @@ import (
 
 type User struct {
 	router fiber.Router
-	user   service.User
+
+	user service.User
 }
 
 func NewUser(router fiber.Router, service service.Service) *User {
@@ -22,10 +23,10 @@ func NewUser(router fiber.Router, service service.Service) *User {
 }
 
 func (u *User) routes() {
-	u.router.Get("/me", u.getMeHandler)
+	u.router.Get("/me", u.getMe)
 }
 
-func (u *User) getMeHandler(c *fiber.Ctx) error {
+func (u *User) getMe(c *fiber.Ctx) error {
 	userID, ok := c.Locals("userID").(int)
 	if !ok {
 		return fiber.ErrUnauthorized

@@ -7,31 +7,39 @@ package sqlc
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const userCreate = `-- name: UserCreate :one
-INSERT INTO users (name, email, uid)
-VALUES ($1, $2, $3)
+INSERT INTO users (uid, name, display_name, email)
+VALUES ($1, $2, $3, $4)
 RETURNING id
 `
 
 type UserCreateParams struct {
-	Name  string
-	Email string
-	Uid   string
+	Uid         string
+	Name        string
+	DisplayName pgtype.Text
+	Email       string
 }
 
 func (q *Queries) UserCreate(ctx context.Context, arg UserCreateParams) (int32, error) {
-	row := q.db.QueryRow(ctx, userCreate, arg.Name, arg.Email, arg.Uid)
+	row := q.db.QueryRow(ctx, userCreate,
+		arg.Uid,
+		arg.Name,
+		arg.DisplayName,
+		arg.Email,
+	)
 	var id int32
 	err := row.Scan(&id)
 	return id, err
 }
 
 const userGet = `-- name: UserGet :one
-SELECT id, name, email, uid
+SELECT id, uid, name, display_name, email
 FROM users
-WHERE id = $1 LIMIT 1
+WHERE id = $1
 `
 
 func (q *Queries) UserGet(ctx context.Context, id int32) (User, error) {
@@ -39,17 +47,50 @@ func (q *Queries) UserGet(ctx context.Context, id int32) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Name,
-		&i.Email,
 		&i.Uid,
+		&i.Name,
+		&i.DisplayName,
+		&i.Email,
 	)
 	return i, err
 }
 
-const userGetByUID = `-- name: UserGetByUID :one
-SELECT id, name, email, uid
+const userGetAllByID = `-- name: UserGetAllByID :many
+SELECT id, uid, name, display_name, email
 FROM users
-WHERE uid = $1 LIMIT 1
+WHERE id = ANY($1::int[])
+`
+
+func (q *Queries) UserGetAllByID(ctx context.Context, dollar_1 []int32) ([]User, error) {
+	rows, err := q.db.Query(ctx, userGetAllByID, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Uid,
+			&i.Name,
+			&i.DisplayName,
+			&i.Email,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const userGetByUID = `-- name: UserGetByUID :one
+SELECT id, uid, name, display_name, email
+FROM users
+WHERE uid = $1
 `
 
 func (q *Queries) UserGetByUID(ctx context.Context, uid string) (User, error) {
@@ -57,9 +98,33 @@ func (q *Queries) UserGetByUID(ctx context.Context, uid string) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Name,
-		&i.Email,
 		&i.Uid,
+		&i.Name,
+		&i.DisplayName,
+		&i.Email,
 	)
 	return i, err
+}
+
+const userUpdate = `-- name: UserUpdate :exec
+UPDATE users
+SET name = $2, display_name = $3, email = $4
+WHERE id = $1
+`
+
+type UserUpdateParams struct {
+	ID          int32
+	Name        string
+	DisplayName pgtype.Text
+	Email       string
+}
+
+func (q *Queries) UserUpdate(ctx context.Context, arg UserUpdateParams) error {
+	_, err := q.db.Exec(ctx, userUpdate,
+		arg.ID,
+		arg.Name,
+		arg.DisplayName,
+		arg.Email,
+	)
+	return err
 }

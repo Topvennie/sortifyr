@@ -15,7 +15,6 @@ func ProtectedRoute(c *fiber.Ctx) error {
 	}
 
 	if session.Fresh() {
-		zap.S().Debug("Unauthorized!")
 		return c.Redirect("/", fiber.StatusUnauthorized)
 	}
 

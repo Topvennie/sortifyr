@@ -63,6 +63,7 @@ func New(service service.Service, pool *pgxpool.Pool) *Server {
 	protectedAPI := api.Use(middlewares.ProtectedRoute)
 
 	routers.NewUser(protectedAPI, service)
+	routers.NewPlaylist(protectedAPI, service)
 
 	// Static files if served in production
 	if !config.IsDev() {

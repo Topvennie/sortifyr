@@ -4,9 +4,27 @@
 
 package sqlc
 
+import (
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
+type Playlist struct {
+	ID            int32
+	SpotifyID     string
+	OwnerID       int32
+	Name          string
+	Description   pgtype.Text
+	Public        bool
+	Tracks        int32
+	Collaborative bool
+	UpdatedAt     pgtype.Timestamptz
+	CreatedAt     pgtype.Timestamptz
+}
+
 type User struct {
-	ID    int32
-	Name  string
-	Email string
-	Uid   string
+	ID          int32
+	Uid         string
+	Name        string
+	DisplayName pgtype.Text
+	Email       string
 }

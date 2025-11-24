@@ -3,13 +3,15 @@ package api
 
 import (
 	"errors"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/markbates/goth"
-	"github.com/markbates/goth/providers/spotify"
+	auth_spotify "github.com/markbates/goth/providers/spotify"
 	"github.com/shareed2k/goth_fiber"
 	"github.com/topvennie/spotify_organizer/internal/server/dto"
 	"github.com/topvennie/spotify_organizer/internal/server/service"
+	"github.com/topvennie/spotify_organizer/internal/spotify"
 	"github.com/topvennie/spotify_organizer/pkg/config"
 	"go.uber.org/zap"
 )
@@ -23,11 +25,11 @@ type Auth struct {
 
 func NewAuth(router fiber.Router, service service.Service) *Auth {
 	goth.UseProviders(
-		spotify.New(
+		auth_spotify.New(
 			config.GetString("auth.spotify.client_id"),
 			config.GetString("auth.spotify.client_secret"),
 			config.GetString("auth.spotify.callback_url"),
-			spotify.ScopePlaylistReadPrivate,
+			auth_spotify.ScopePlaylistReadPrivate,
 		),
 	)
 
@@ -59,15 +61,29 @@ func (r *Auth) loginCallback(c *fiber.Ctx) error {
 	if err != nil {
 		if errors.Is(err, fiber.ErrNotFound) {
 			dtoUser = dto.User{
+				UID:   user.UserID,
 				Name:  user.Name,
 				Email: user.Email,
-				UID:   user.UserID,
 			}
-			dtoUser, err = r.user.Save(c.Context(), dtoUser)
+			dtoUser, err = r.user.Create(c.Context(), dtoUser)
 		}
 		if err != nil {
 			return err
 		}
+	}
+
+	if user.Name != dtoUser.Name {
+		// Can happen if the user got added because (for example) he/she owned a playlist
+		dtoUser.Name = user.Name
+		dtoUser, err = r.user.Update(c.Context(), dtoUser)
+		if err != nil {
+			return err
+		}
+	}
+
+	if err := spotify.C.NewUser(c.Context(), *dtoUser.ToModel(), user.AccessToken, user.RefreshToken, time.Until(user.ExpiresAt)); err != nil {
+		zap.S().Error(err)
+		return fiber.ErrInternalServerError
 	}
 
 	if err := storeInSession(c, "userID", dtoUser.ID); err != nil {

@@ -6,6 +6,7 @@ import (
 	"github.com/topvennie/spotify_organizer/internal/database/repository"
 	"github.com/topvennie/spotify_organizer/internal/server"
 	"github.com/topvennie/spotify_organizer/internal/server/service"
+	"github.com/topvennie/spotify_organizer/internal/spotify"
 	"github.com/topvennie/spotify_organizer/pkg/config"
 	"github.com/topvennie/spotify_organizer/pkg/db"
 	"github.com/topvennie/spotify_organizer/pkg/logger"
@@ -41,6 +42,10 @@ func main() {
 
 	repo := repository.New(db)
 	service := service.New(*repo)
+
+	if err := spotify.Init(*repo); err != nil {
+		zap.S().Fatalf("Failed to init the spotify package %v", err)
+	}
 
 	api := server.New(*service, db.Pool())
 
