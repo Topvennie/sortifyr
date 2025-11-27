@@ -6,6 +6,7 @@ import { Error } from "./pages/Error";
 import { Index } from "./pages/Index";
 import { Playlists } from "./pages/Playlist";
 import { DirectoryEditor } from "./pages/DirectoryEditor";
+import { Home } from "./pages/Home";
 
 const root = createRootRouteWithContext()({
   component: App,
@@ -13,8 +14,14 @@ const root = createRootRouteWithContext()({
 
 const index = createRoute({
   getParentRoute: () => root,
-  path: "/",
+  id: "public-layout",
   component: Index,
+})
+
+const home = createRoute({
+  getParentRoute: () => index,
+  path: "/",
+  component: Home,
 })
 
 const playlist = createRoute({
@@ -37,6 +44,7 @@ const directoryEditor = createRoute({
 
 const routeTree = root.addChildren([
   index.addChildren([
+    home,
     playlist,
     directory,
     directoryEditor,

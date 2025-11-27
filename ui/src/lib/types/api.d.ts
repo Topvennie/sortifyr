@@ -11,7 +11,7 @@ export namespace API {
   }
 
   export interface Setting extends Base {
-    last_updated: string;
+    last_update?: string;
   }
 
   export interface Playlist extends Base {

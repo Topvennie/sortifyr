@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
+import { format } from "date-fns";
 import { twMerge } from "tailwind-merge";
-import { v4 as uuid } from 'uuid'
+import { v4 as uuid } from 'uuid';
 
 export function camelToSnake(obj: unknown): unknown {
   if (obj === null || obj === undefined) {
@@ -37,4 +38,8 @@ export function cn(...inputs: ClassValue[]) {
 
 export function getUuid() {
   return uuid();
+}
+
+export function formatDate(date: Date) {
+  return format(date, "eee dd MMMM, HH:mm");
 }

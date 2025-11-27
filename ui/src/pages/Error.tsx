@@ -36,10 +36,10 @@ export const Error = ({ error, reset }: ErrorComponentProps) => {
       <Title order={1} className="mt-4 text-balance font-semibold tracking-tight">
         Server Error
       </Title>
-      <p className="flex flex-col items-center mt-6 text-pretty text-lg font-medium text-gray-500 sm:text-xl/8">
+      <p className="mt-6 text-pretty text-lg font-medium text-gray-500 sm:text-xl/8">
         <span>Something went wrong</span>
       </p>
-      <div className="mt-10 flex items-center justify-center gap-x-6">
+      <div className="mt-10">
         <Button onClick={handleReturn}>
           Go back
         </Button>
