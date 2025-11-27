@@ -8,8 +8,11 @@ type Props = {
 
 export const DirectoryPlaylistSelector = ({ playlists }: Props) => {
   return (
-    <div className="border-2 border-gray-400 rounded-xl p-4 flex flex-wrap gap-2 h-fit">
-      {playlists.map(p => <Entry key={p.id} playlist={p} />)}
+    <div className="border-1 border-gray-200 rounded-md p-4 flex flex-wrap gap-2 h-fit">
+      {playlists.length > 0
+        ? playlists.map(p => <Entry key={p.id} playlist={p} />)
+        : <span className="w-full text-center">All playlists belong to a directory!</span>
+      }
     </div>
   )
 }

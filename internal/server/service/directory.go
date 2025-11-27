@@ -44,6 +44,8 @@ func (d *Directory) GetByUser(ctx context.Context, userID int) ([]dto.Directory,
 	return directories, nil
 }
 
+// Sync brings the database up to date with the data received from the api
+// nolint:gocognit // It's fine
 func (d *Directory) Sync(ctx context.Context, userID int, roots []dto.Directory) ([]dto.Directory, error) {
 	directoryDTOs := make([]dto.Directory, 0)
 
@@ -133,11 +135,11 @@ func (d *Directory) Sync(ctx context.Context, userID int, roots []dto.Directory)
 			}
 
 			// Create / Delete linked playlists
-			for _, playlistNew := range entry.new.Playlists {
-				if _, ok := utils.SliceFind(entry.old.Playlists, func(p model.Playlist) bool { return p.ID == playlistNew.ID }); !ok {
+			for i := range entry.new.Playlists {
+				if _, ok := utils.SliceFind(entry.old.Playlists, func(p model.Playlist) bool { return p.ID == entry.new.Playlists[i].ID }); !ok {
 					if err := d.directory.CreatePlaylist(ctx, &model.DirectoryPlaylist{
 						DirectoryID: entry.new.ID,
-						PlaylistID:  playlistNew.ID,
+						PlaylistID:  entry.new.Playlists[i].ID,
 					}); err != nil {
 						zap.S().Error(err)
 						return fiber.ErrInternalServerError
@@ -145,9 +147,9 @@ func (d *Directory) Sync(ctx context.Context, userID int, roots []dto.Directory)
 				}
 			}
 
-			for _, playlistOld := range entry.old.Playlists {
-				if _, ok := utils.SliceFind(entry.new.Playlists, func(p model.Playlist) bool { return p.ID == playlistOld.ID }); !ok {
-					if err := d.directory.DeletePlaylist(ctx, playlistOld.ID); err != nil {
+			for i := range entry.old.Playlists {
+				if _, ok := utils.SliceFind(entry.new.Playlists, func(p model.Playlist) bool { return p.ID == entry.old.Playlists[i].ID }); !ok {
+					if err := d.directory.DeletePlaylist(ctx, entry.old.Playlists[i].ID); err != nil {
 						zap.S().Error(err)
 						return fiber.ErrInternalServerError
 					}

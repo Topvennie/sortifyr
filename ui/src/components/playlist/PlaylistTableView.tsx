@@ -8,10 +8,10 @@ import { LoadingSpinner } from "../molecules/LoadingSpinner";
 type SortKey = "name" | "tracks" | "owner.name"
 
 const sortBy = (playlists: Playlist[], key: SortKey): Playlist[] => {
-  const getter: Record<SortKey, (p: Playlist) => any> = {
+  const getter: Record<SortKey, (p: Playlist) => string | number> = {
     name: p => p.name,
     tracks: p => p.tracks,
-    "owner.name": p => p.owner?.name,
+    "owner.name": p => p.owner?.name ?? "",
   };
 
   return [...playlists].sort((a, b) => {
@@ -32,9 +32,8 @@ export const PlaylistTableView = () => {
 
   useEffect(() => {
     const data = sortBy(playlists ?? [], sortStatus.columnAccessor as SortKey);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRecords(sortStatus.direction === 'desc' ? data.reverse() : data);
-  }, [sortStatus])
+  }, [sortStatus, playlists])
 
   if (isLoading) return <LoadingSpinner />
 

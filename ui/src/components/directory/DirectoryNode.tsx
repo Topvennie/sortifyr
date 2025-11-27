@@ -3,7 +3,7 @@ import { PlaylistSchema } from "@/lib/types/playlist";
 import { getUuid } from "@/lib/utils";
 import { useDroppable } from "@dnd-kit/core";
 import { ActionIcon, TextInput } from "@mantine/core";
-import { useState } from "react";
+import { MouseEvent, useState } from "react";
 import { FaCheck, FaPencil, FaPlus, FaRegFolder, FaRegFolderOpen, FaTrashCan, FaX } from "react-icons/fa6";
 import { DirectoryPlaylist } from "./DirectoryPlaylist";
 
@@ -25,7 +25,9 @@ export const DirectoryNode = ({ directory, onUpdate, onDelete, level }: Props) =
     id: directory.iid,
   })
 
-  const handleCreate = () => {
+  const handleCreate = (e: MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation()
+
     const newDir: DirectorySchema = {
       iid: getUuid(),
       name: "New subdirectory",
@@ -53,7 +55,9 @@ export const DirectoryNode = ({ directory, onUpdate, onDelete, level }: Props) =
     setExpanded(prev => !prev)
   }
 
-  const handleChangeName = (save: boolean) => {
+  const handleChangeName = (e: MouseEvent<HTMLButtonElement>, save: boolean) => {
+    e.stopPropagation()
+
     if (!editing) {
       setName(directory.name)
       setEditing(true)
@@ -71,11 +75,12 @@ export const DirectoryNode = ({ directory, onUpdate, onDelete, level }: Props) =
   return (
     <div ref={setNodeRef} className="flex flex-col gap-1">
       <div
+        onClick={handleExpand}
         style={{ marginLeft: level * 16 }}
-        className={`flex items-center justify-between rounded-md bg-gray-200 p-4 ${isOver ? "brightness-75" : ""}`}
+        className={`flex items-center justify-between rounded-md bg-gray-200 p-4 cursor-pointer ${isOver ? "brightness-75" : ""}`}
       >
         <div className="flex items-center gap-4">
-          <div onClick={handleExpand} className="flex items-center gap-2 cursor-pointer">
+          <div className="flex items-center gap-2">
             <ActionIcon color="black" variant="subtle" disabled={editing} >
               {expanded
                 ? <FaRegFolderOpen />
@@ -93,15 +98,15 @@ export const DirectoryNode = ({ directory, onUpdate, onDelete, level }: Props) =
           </div>
           {editing ? (
             <>
-              <ActionIcon onClick={() => handleChangeName(true)} size="xs" variant="transparent">
+              <ActionIcon onClick={e => handleChangeName(e, true)} size="xs" variant="subtle">
                 <FaCheck color="green" />
               </ActionIcon>
-              <ActionIcon onClick={() => handleChangeName(false)} size="xs" variant="transparent">
+              <ActionIcon onClick={e => handleChangeName(e, false)} size="xs" variant="subtle">
                 <FaX color="red" />
               </ActionIcon>
             </>
           ) : (
-            <ActionIcon onClick={() => handleChangeName(false)} size="xs" variant="transparent">
+            <ActionIcon onClick={e => handleChangeName(e, false)} size="xs" variant="subtle">
               <FaPencil color="black" />
             </ActionIcon>
           )}
@@ -110,7 +115,10 @@ export const DirectoryNode = ({ directory, onUpdate, onDelete, level }: Props) =
           <ActionIcon onClick={handleCreate} variant="subtle">
             <FaPlus />
           </ActionIcon>
-          <ActionIcon onClick={() => onDelete(directory)} color="red" variant="subtle">
+          <ActionIcon onClick={e => {
+            e.stopPropagation()
+            onDelete(directory)
+          }} color="red" variant="subtle">
             <FaTrashCan />
           </ActionIcon>
         </div>

@@ -17,4 +17,5 @@
 @theme {
   --breakpoint-3xl: 142em;
   --breakpoint-4xl: 172em;
+  --color-muted: #989898;
 }
