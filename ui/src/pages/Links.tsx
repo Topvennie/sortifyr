@@ -7,7 +7,7 @@ import { useDirectoryGetAll } from "@/lib/api/directory"
 import { useLinkAnchor } from "@/lib/hooks/useLinkAnchor"
 import { LinkAnchorProvider } from "@/lib/providers/LinkAnchorProvider"
 import { Button, Stack, Title, Text } from "@mantine/core"
-import { useDisclosure } from "@mantine/hooks"
+import { useDisclosure, useMediaQuery } from "@mantine/hooks"
 
 export const Links = () => {
   return (
@@ -33,7 +33,15 @@ const LinksInner = () => {
   const [openedReset, { open: openReset, close: closeReset }] = useDisclosure()
   const [openedSave, { open: openSave, close: closeSave }] = useDisclosure()
 
+  const mdPoint = useMediaQuery('(width >= 64em)');
+
   if (isLoading) return <LoadingSpinner />
+  if (!mdPoint) return (
+    <div className="flex flex-col justify-center gap-4">
+      <Title order={1} className="text-center">Links</Title>
+      <span className="text-center">This page only supports big screen, apologies!</span>
+    </div>
+  )
 
   const handleInfo = () => {
     openInfo()
