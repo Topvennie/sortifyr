@@ -49,7 +49,7 @@ func New(service service.Service, pool *pgxpool.Pool) *Server {
 	})
 
 	goth_fiber.SessionStore = session.New(session.Config{
-		KeyLookup:      fmt.Sprintf("cookie:%s_session_id", config.GetString("app.name")),
+		KeyLookup:      fmt.Sprintf("cookie:%s_session_id", config.GetDefaultString("app.name", "spotify_organizer")),
 		CookieHTTPOnly: true,
 		Storage:        sessionStore,
 		CookieSecure:   !config.IsDev(),

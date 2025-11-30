@@ -3,7 +3,6 @@ package redis
 
 import (
 	"context"
-	"errors"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/topvennie/spotify_organizer/pkg/config"
@@ -15,10 +14,7 @@ var (
 )
 
 func New() error {
-	URL := config.GetDefaultString("redis.url", "")
-	if URL == "" {
-		return errors.New("no redis url configured")
-	}
+	URL := config.GetDefaultString("redis.url", "redis://default@redis:6379")
 
 	options, err := redis.ParseURL(URL)
 	if err != nil {

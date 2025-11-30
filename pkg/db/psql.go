@@ -25,7 +25,7 @@ func NewPSQL() (DB, error) {
 		return nil, err
 	}
 
-	pgConfig.ConnConfig.Host = config.GetDefaultString("db.host", "localhost")
+	pgConfig.ConnConfig.Host = config.GetDefaultString("db.host", "db")
 	pgConfig.ConnConfig.Port = config.GetDefaultUint16("db.port", 5432)
 	pgConfig.ConnConfig.Database = config.GetDefaultString("db.database", "spotify_organizer")
 	pgConfig.ConnConfig.User = config.GetDefaultString("db.user", "postgres")

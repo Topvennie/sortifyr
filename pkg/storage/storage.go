@@ -22,11 +22,11 @@ func New(pool *pgxpool.Pool) error {
 	case "minio":
 		S = minio.New(minio.Config{
 			Bucket:   config.GetDefaultString("minio.bucket", "spotify"),
-			Endpoint: config.GetString("minio.endpoint"),
+			Endpoint: config.GetDefaultString("minio.endpoint", "minio:9000"),
 			Secure:   config.GetDefaultBool("minio.secure", false),
 			Credentials: minio.Credentials{
-				AccessKeyID:     config.GetString("minio.username"),
-				SecretAccessKey: config.GetString("minio.password"),
+				AccessKeyID:     config.GetDefaultString("minio.username", "minio"),
+				SecretAccessKey: config.GetDefaultString("minio.password", "miniominio"),
 			},
 		})
 
