@@ -125,7 +125,8 @@ To update:
 
 ```bash
 docker compose pull
-docker compose restart
+docker compose down
+docker compose up
 ```
 
 ### Manual Setup (Advanced)
