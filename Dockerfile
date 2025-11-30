@@ -45,6 +45,7 @@ RUN apk add --no-cache gcc musl-dev
 # Copy our executable and our built React application.
 COPY --from=backend-builder /app/server .
 COPY --from=backend-builder /app/migrate .
+COPY --from=backend-builder /app/config/production.toml ./config/production.toml
 COPY --from=frontend-build /frontend/public ./public
 
 ENV APP_ENV=production
