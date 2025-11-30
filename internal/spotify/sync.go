@@ -288,6 +288,10 @@ func (c *client) linkSync(ctx context.Context, user model.User) error {
 }
 
 func (c *client) linkSyncOne(ctx context.Context, user model.User, source, target model.Playlist) error {
+	if source.Equal(target) {
+		return nil
+	}
+
 	tracksSource, err := c.track.GetByPlaylist(ctx, source.ID)
 	if err != nil {
 		return err
