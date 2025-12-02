@@ -103,11 +103,12 @@ type Task struct {
 type TaskRun struct {
 	ID       int32
 	TaskUid  string
-	UserID   pgtype.Int4
+	UserID   int32
 	RunAt    pgtype.Timestamptz
 	Result   TaskResult
 	Error    pgtype.Text
 	Duration int64
+	Message  pgtype.Text
 }
 
 type Track struct {

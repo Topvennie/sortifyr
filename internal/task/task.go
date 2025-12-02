@@ -37,10 +37,21 @@ type Task interface {
 	// Interval returns the time between executions.
 	Interval() time.Duration
 	// The function that actually gets executed when it's time
-	// If *model.user != nil then it means that user triggered the execution
+	// The user slice contains all users for who the task need to executed
+	// In reality this will either be a single user (if the user started the task from the api)
+	// Or it contain all users if it's a regular interval run
 	// It's up to the function to decide how to handle it
-	Func() func(context.Context, *model.User) error
+	// If the returned task result does not contain one of the users that was given as argument
+	// then the task result is not saved for that user
+	Func() func(context.Context, []model.User) []TaskResult
 	Ctx() context.Context
+}
+
+// TaskResult is the expected return from the actual task function
+type TaskResult struct {
+	User    model.User
+	Message string
+	Error   error
 }
 
 type Status string
@@ -52,21 +63,19 @@ const (
 
 // Stat contains the information about a current running or scheduled task
 type Stat struct {
-	TaskUID    string
-	Name       string
-	Status     Status
-	NextRun    time.Time
-	LastStatus model.TaskResult
-	LastRun    time.Time
-	LastError  error
-	Interval   time.Duration
+	TaskUID  string
+	Name     string
+	Status   Status
+	NextRun  time.Time
+	LastRun  time.Time
+	Interval time.Duration
 }
 
 type internalTask struct {
 	uid      string
 	name     string
 	interval time.Duration
-	fn       func(context.Context, *model.User) error
+	fn       func(context.Context, []model.User) []TaskResult
 	ctx      context.Context
 }
 
@@ -77,7 +86,7 @@ var _ Task = (*internalTask)(nil)
 // It supports an optional context, if none is given the background context is used
 // Logs (info level) when a task starts and ends
 // Logs (error level) any error that occurs during the task execution
-func NewTask(uid, name string, interval time.Duration, fn func(context.Context, *model.User) error, ctx ...context.Context) Task {
+func NewTask(uid, name string, interval time.Duration, fn func(context.Context, []model.User) []TaskResult, ctx ...context.Context) Task {
 	c := context.Background()
 	if len(ctx) > 0 {
 		c = ctx[0]
@@ -104,18 +113,20 @@ func (t *internalTask) Interval() time.Duration {
 	return t.interval
 }
 
-func (t *internalTask) Func() func(context.Context, *model.User) error {
-	return func(ctx context.Context, user *model.User) error {
+func (t *internalTask) Func() func(context.Context, []model.User) []TaskResult {
+	return func(ctx context.Context, users []model.User) []TaskResult {
 		zap.S().Infof("Task running %s", t.name)
 
-		if err := t.fn(ctx, user); err != nil {
-			zap.S().Errorf("Task %s failed | %v", t.name, err)
-			return err
+		results := t.fn(ctx, users)
+		for _, result := range results {
+			if result.Error != nil {
+				zap.S().Errorf("Task %s failed for user %+v | %+v", t.name, result.User, result)
+			}
 		}
 
 		zap.S().Infof("Task finished %s", t.name)
 
-		return nil
+		return results
 	}
 }
 

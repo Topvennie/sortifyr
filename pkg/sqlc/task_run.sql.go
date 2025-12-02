@@ -12,16 +12,17 @@ import (
 )
 
 const taskRunCreate = `-- name: TaskRunCreate :one
-INSERT INTO task_runs (task_uid, user_id, run_at, result, error, duration)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO task_runs (task_uid, user_id, run_at, result, message, error, duration)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING id
 `
 
 type TaskRunCreateParams struct {
 	TaskUid  string
-	UserID   pgtype.Int4
+	UserID   int32
 	RunAt    pgtype.Timestamptz
 	Result   TaskResult
+	Message  pgtype.Text
 	Error    pgtype.Text
 	Duration int64
 }
@@ -32,6 +33,7 @@ func (q *Queries) TaskRunCreate(ctx context.Context, arg TaskRunCreateParams) (i
 		arg.UserID,
 		arg.RunAt,
 		arg.Result,
+		arg.Message,
 		arg.Error,
 		arg.Duration,
 	)

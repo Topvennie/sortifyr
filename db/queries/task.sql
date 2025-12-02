@@ -14,7 +14,7 @@ SELECT sqlc.embed(t), sqlc.embed(r)
 FROM task_runs r
 LEFT JOIN tasks t ON t.uid = r.task_uid
 WHERE
-  (r.user_id = $1::int OR r.user_id IS NULL) AND
+  r.user_id = $1::int AND
   (t.uid = $2 OR NOT @filter_task_uid) AND
   (r.result = $3 OR NOT @filter_result) AND
   t.active

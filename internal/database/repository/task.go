@@ -98,8 +98,9 @@ func (t *Task) CreateRun(ctx context.Context, task *model.Task) error {
 
 	id, err := t.repo.queries(ctx).TaskRunCreate(ctx, sqlc.TaskRunCreateParams{
 		TaskUid:  task.UID,
-		UserID:   pgtype.Int4{Int32: int32(task.UserID), Valid: task.UserID != 0},
+		UserID:   int32(task.UserID),
 		RunAt:    pgtype.Timestamptz{Time: task.RunAt, Valid: !task.RunAt.IsZero()},
+		Message:  pgtype.Text{String: task.Message, Valid: task.Message != ""},
 		Result:   sqlc.TaskResult(task.Result),
 		Error:    pgtype.Text{String: errStr, Valid: errStr != ""},
 		Duration: task.Duration.Nanoseconds(),

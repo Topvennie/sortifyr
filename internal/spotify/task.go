@@ -46,55 +46,55 @@ func (c *client) taskRegister() error {
 	return nil
 }
 
-func (c *client) taskWrap(fn func(context.Context, model.User) error) func(context.Context, *model.User) error {
-	return func(ctx context.Context, user *model.User) error {
-		if user != nil {
-			return fn(ctx, *user)
-		}
-
-		users, err := c.user.GetActualAll(ctx)
-		if err != nil {
-			return err
-		}
+func (c *client) taskWrap(fn func(context.Context, model.User) (string, error)) func(context.Context, []model.User) []task.TaskResult {
+	return func(ctx context.Context, users []model.User) []task.TaskResult {
+		results := make([]task.TaskResult, 0, len(users))
 
 		for _, user := range users {
-			if err := fn(ctx, *user); err != nil {
-				return err
-			}
+			msg, err := fn(ctx, user)
+			results = append(results, task.TaskResult{
+				User:    user,
+				Message: msg,
+				Error:   err,
+			})
 		}
 
-		return nil
+		return results
 	}
 }
 
-func (c *client) taskPlaylist(ctx context.Context, user model.User) error {
-	if err := c.syncPlaylist(ctx, user); err != nil {
-		return fmt.Errorf("synchronize playlists %w", err)
+func (c *client) taskPlaylist(ctx context.Context, user model.User) (string, error) {
+	msg1, err := c.syncPlaylist(ctx, user)
+	if err != nil {
+		return "", fmt.Errorf("synchronize playlists %w", err)
 	}
 
-	if err := c.syncPlaylistCover(ctx, user); err != nil {
-		return fmt.Errorf("synchronize playlist covers %w", err)
+	msg2, err := c.syncPlaylistCover(ctx, user)
+	if err != nil {
+		return "", fmt.Errorf("synchronize playlist covers %w", err)
 	}
 
-	return nil
+	return fmt.Sprintf("%s | %s", msg1, msg2), nil
 }
 
-func (c *client) taskTrack(ctx context.Context, user model.User) error {
-	if err := c.syncPlaylistTrack(ctx, user); err != nil {
-		return fmt.Errorf("synchronize tracks %w", err)
+func (c *client) taskTrack(ctx context.Context, user model.User) (string, error) {
+	msg1, err := c.syncPlaylistTrack(ctx, user)
+	if err != nil {
+		return "", fmt.Errorf("synchronize tracks %w", err)
 	}
 
-	if err := c.syncLink(ctx, user); err != nil {
-		return fmt.Errorf("update playlist tracks based on links %w", err)
+	msg2, err := c.syncLink(ctx, user)
+	if err != nil {
+		return "", fmt.Errorf("update playlist tracks based on links %w", err)
 	}
 
-	return nil
+	return fmt.Sprintf("%s | %s", msg1, msg2), nil
 }
 
-func (c *client) taskUser(ctx context.Context, user model.User) error {
+func (c *client) taskUser(ctx context.Context, user model.User) (string, error) {
 	if err := c.syncUser(ctx, user); err != nil {
-		return fmt.Errorf("synchronize users %w", err)
+		return "", fmt.Errorf("synchronize users %w", err)
 	}
 
-	return nil
+	return "", nil
 }

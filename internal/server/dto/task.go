@@ -12,6 +12,7 @@ type TaskHistory struct {
 	Name     string           `json:"name"`
 	Result   model.TaskResult `json:"result"`
 	RunAt    time.Time        `json:"run_at"`
+	Message  string           `json:"message"`
 	Error    string           `json:"error,omitempty"`
 	Duration time.Duration    `json:"duration"`
 }
@@ -27,6 +28,7 @@ func TaskHistoryDTO(task *model.Task) TaskHistory {
 		Name:     task.Name,
 		Result:   task.Result,
 		RunAt:    task.RunAt,
+		Message:  task.Message,
 		Error:    taskError,
 		Duration: task.Duration,
 	}
@@ -44,20 +46,13 @@ type Task struct {
 }
 
 func TaskDTO(task task.Stat) Task {
-	lastError := ""
-	if task.LastError != nil {
-		lastError = task.LastError.Error()
-	}
-
 	return Task{
-		TaskUID:    task.TaskUID,
-		Name:       task.Name,
-		Status:     task.Status,
-		NextRun:    task.NextRun,
-		LastStatus: task.LastStatus,
-		LastRun:    &task.LastRun,
-		LastError:  lastError,
-		Interval:   &task.Interval,
+		TaskUID:  task.TaskUID,
+		Name:     task.Name,
+		Status:   task.Status,
+		NextRun:  task.NextRun,
+		LastRun:  &task.LastRun,
+		Interval: &task.Interval,
 	}
 }
 

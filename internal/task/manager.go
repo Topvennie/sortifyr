@@ -10,6 +10,7 @@ import (
 	"github.com/go-co-op/gocron/v2"
 	"github.com/topvennie/spotify_organizer/internal/database/model"
 	"github.com/topvennie/spotify_organizer/internal/database/repository"
+	"github.com/topvennie/spotify_organizer/pkg/utils"
 	"go.uber.org/zap"
 )
 
@@ -17,11 +18,9 @@ import (
 var Manager *manager
 
 type job struct {
-	task       model.Task
-	status     Status
-	interval   time.Duration
-	lastStatus model.TaskResult
-	lastError  error
+	task     model.Task
+	status   Status
+	interval time.Duration
 
 	users []model.User // If it's not empty then an user triggered it and is waiting on it
 }
@@ -31,7 +30,8 @@ type job struct {
 // However it does not automatically reshedule tasks after an application reboot
 type manager struct {
 	scheduler gocron.Scheduler
-	repo      repository.Task
+	repoTask  repository.Task
+	repoUser  repository.User
 
 	mu   sync.Mutex
 	jobs map[string]job
@@ -47,11 +47,12 @@ func newManager(repo repository.Repository) (*manager, error) {
 
 	manager := &manager{
 		scheduler: scheduler,
-		repo:      *repo.NewTask(),
+		repoTask:  *repo.NewTask(),
+		repoUser:  *repo.NewUser(),
 		jobs:      make(map[string]job),
 	}
 
-	if err := manager.repo.SetInactiveAll(context.Background()); err != nil {
+	if err := manager.repoTask.SetInactiveAll(context.Background()); err != nil {
 		return nil, err
 	}
 
@@ -70,7 +71,7 @@ func (m *manager) Add(ctx context.Context, newTask Task) error {
 		return fmt.Errorf("task %s already exists (uid: %s)", newTask.Name(), newTask.UID())
 	}
 
-	task, err := m.repo.GetByUID(ctx, newTask.UID())
+	task, err := m.repoTask.GetByUID(ctx, newTask.UID())
 	if err != nil {
 		return err
 	}
@@ -79,7 +80,7 @@ func (m *manager) Add(ctx context.Context, newTask Task) error {
 		// Update it
 		task.Name = newTask.Name()
 		task.Active = true
-		if err := m.repo.Update(ctx, *task); err != nil {
+		if err := m.repoTask.Update(ctx, *task); err != nil {
 			return err
 		}
 	} else {
@@ -90,7 +91,7 @@ func (m *manager) Add(ctx context.Context, newTask Task) error {
 			Name:   newTask.Name(),
 			Active: true,
 		}
-		if err := m.repo.Create(ctx, *task); err != nil {
+		if err := m.repoTask.Create(ctx, *task); err != nil {
 			return err
 		}
 	}
@@ -111,12 +112,10 @@ func (m *manager) Add(ctx context.Context, newTask Task) error {
 	}
 
 	m.jobs[task.UID] = job{
-		task:       *task,
-		status:     Waiting,
-		interval:   newTask.Interval(),
-		lastStatus: model.TaskSuccess,
-		lastError:  nil,
-		users:      []model.User{},
+		task:     *task,
+		status:   Waiting,
+		interval: newTask.Interval(),
+		users:    []model.User{},
 	}
 
 	return nil
@@ -177,14 +176,12 @@ func (m *manager) Tasks() ([]Stat, error) {
 			}
 
 			stats = append(stats, Stat{
-				TaskUID:    j.task.UID,
-				Name:       j.task.Name,
-				Status:     j.status,
-				NextRun:    nextRun,
-				LastStatus: j.lastStatus,
-				LastRun:    lastRun,
-				LastError:  j.lastError,
-				Interval:   j.interval,
+				TaskUID:  j.task.UID,
+				Name:     j.task.Name,
+				Status:   j.status,
+				NextRun:  nextRun,
+				LastRun:  lastRun,
+				Interval: j.interval,
 			})
 		}
 	}
@@ -205,42 +202,52 @@ func (m *manager) wrap(task Task) func(context.Context) {
 			return
 		}
 
-		var user *model.User
+		var users []model.User
 		if len(info.users) > 0 {
-			user = &info.users[0]
-			info.users = info.users[1:]
+			users = info.users
+			info.users = []model.User{}
 		}
 		info.status = Running
 
 		m.jobs[task.UID()] = info
 		m.mu.Unlock()
 
+		if len(users) == 0 {
+			// It's a generic interval run
+			// Add all real users
+			usersDB, err := m.repoUser.GetActualAll(ctx)
+			if err != nil {
+				zap.S().Error(err)
+				return
+			}
+			users = utils.SliceDereference(usersDB)
+		}
+
 		// Run task
 		start := time.Now()
-		err := task.Func()(ctx, user)
+		results := task.Func()(ctx, users)
 		end := time.Now()
 
 		// Save result
-		userID := 0
-		if user != nil {
-			userID = user.ID
-		}
-		result := model.TaskSuccess
-		if err != nil {
-			result = model.TaskFailed
-		}
+		for _, result := range results {
+			taskResult := model.TaskSuccess
+			if result.Error != nil {
+				taskResult = model.TaskFailed
+			}
 
-		taskDB := &model.Task{
-			UID:      task.UID(),
-			UserID:   userID,
-			RunAt:    time.Now(),
-			Result:   result,
-			Error:    err,
-			Duration: end.Sub(start),
-		}
+			taskDB := &model.Task{
+				UID:      task.UID(),
+				UserID:   result.User.ID,
+				RunAt:    time.Now(),
+				Result:   taskResult,
+				Message:  result.Message,
+				Error:    result.Error,
+				Duration: end.Sub(start),
+			}
 
-		if errDB := m.repo.CreateRun(ctx, taskDB); errDB != nil {
-			zap.S().Errorf("Failed to save recurring task result in database %+v | %v", *taskDB, err)
+			if errDB := m.repoTask.CreateRun(ctx, taskDB); errDB != nil {
+				zap.S().Errorf("Failed to save recurring task result in database %+v | %v", *taskDB, errDB)
+			}
 		}
 
 		m.mu.Lock()
@@ -248,8 +255,6 @@ func (m *manager) wrap(task Task) func(context.Context) {
 
 		info = m.jobs[task.UID()]
 		info.status = Waiting
-		info.lastStatus = result
-		info.lastError = err
 		m.jobs[task.UID()] = info
 	}
 }
