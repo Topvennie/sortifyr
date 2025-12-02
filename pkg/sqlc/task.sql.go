@@ -26,7 +26,7 @@ func (q *Queries) TaskCreate(ctx context.Context, arg TaskCreateParams) error {
 }
 
 const taskGetByUID = `-- name: TaskGetByUID :one
-SELECT uid, name, active
+SELECT id, uid, name, active
 FROM tasks
 WHERE uid = $1
 `
@@ -34,12 +34,17 @@ WHERE uid = $1
 func (q *Queries) TaskGetByUID(ctx context.Context, uid string) (Task, error) {
 	row := q.db.QueryRow(ctx, taskGetByUID, uid)
 	var i Task
-	err := row.Scan(&i.Uid, &i.Name, &i.Active)
+	err := row.Scan(
+		&i.ID,
+		&i.Uid,
+		&i.Name,
+		&i.Active,
+	)
 	return i, err
 }
 
 const taskGetFiltered = `-- name: TaskGetFiltered :many
-SELECT t.uid, t.name, t.active, r.id, r.task_uid, r.user_id, r.run_at, r.result, r.error, r.duration, r.message
+SELECT t.id, t.uid, t.name, t.active, r.id, r.task_uid, r.user_id, r.run_at, r.result, r.error, r.duration, r.message
 FROM task_runs r
 LEFT JOIN tasks t ON t.uid = r.task_uid
 WHERE
@@ -84,6 +89,7 @@ func (q *Queries) TaskGetFiltered(ctx context.Context, arg TaskGetFilteredParams
 	for rows.Next() {
 		var i TaskGetFilteredRow
 		if err := rows.Scan(
+			&i.Task.ID,
 			&i.Task.Uid,
 			&i.Task.Name,
 			&i.Task.Active,
@@ -107,7 +113,7 @@ func (q *Queries) TaskGetFiltered(ctx context.Context, arg TaskGetFilteredParams
 }
 
 const taskRunGet = `-- name: TaskRunGet :one
-SELECT t.uid, t.name, t.active, r.id, r.task_uid, r.user_id, r.run_at, r.result, r.error, r.duration, r.message
+SELECT t.id, t.uid, t.name, t.active, r.id, r.task_uid, r.user_id, r.run_at, r.result, r.error, r.duration, r.message
 FROM task_runs r
 LEFT JOIN tasks t ON t.uid = r.task_uid
 WHERE r.id = $1
@@ -122,6 +128,7 @@ func (q *Queries) TaskRunGet(ctx context.Context, id int32) (TaskRunGetRow, erro
 	row := q.db.QueryRow(ctx, taskRunGet, id)
 	var i TaskRunGetRow
 	err := row.Scan(
+		&i.Task.ID,
 		&i.Task.Uid,
 		&i.Task.Name,
 		&i.Task.Active,

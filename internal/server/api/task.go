@@ -31,7 +31,12 @@ func (r *Task) createRoutes() {
 }
 
 func (r *Task) getTasks(c *fiber.Ctx) error {
-	tasks, err := r.task.GetTasks()
+	userID, ok := c.Locals("userID").(int)
+	if !ok {
+		return fiber.ErrUnauthorized
+	}
+
+	tasks, err := r.task.GetTasks(c.Context(), userID)
 	if err != nil {
 		return err
 	}

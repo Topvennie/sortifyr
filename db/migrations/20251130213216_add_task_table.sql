@@ -3,6 +3,7 @@
 CREATE TYPE task_result AS ENUM ('success', 'failed');
 
 CREATE TABLE tasks (
+  id SERIAL PRIMARY KEY,
   uid VARCHAR(255) NOT NULL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   active BOOLEAN NOT NULL

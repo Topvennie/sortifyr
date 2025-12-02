@@ -35,14 +35,15 @@ func TaskHistoryDTO(task *model.Task) TaskHistory {
 }
 
 type Task struct {
-	TaskUID    string           `json:"uid"`
-	Name       string           `json:"name"`
-	Status     task.Status      `json:"status"`
-	NextRun    time.Time        `json:"next_run"`
-	LastStatus model.TaskResult `json:"last_status,omitempty"`
-	LastRun    *time.Time       `json:"last_run,omitzero"`
-	LastError  string           `json:"last_error,omitempty"`
-	Interval   *time.Duration   `json:"interval,omitzero"`
+	TaskUID     string           `json:"uid"`
+	Name        string           `json:"name"`
+	Status      task.Status      `json:"status"`
+	NextRun     time.Time        `json:"next_run"`
+	LastStatus  model.TaskResult `json:"last_status,omitempty"`
+	LastRun     *time.Time       `json:"last_run,omitzero"`
+	LastMessage string           `json:"last_message,omitempty"`
+	LastError   string           `json:"last_error,omitempty"`
+	Interval    *time.Duration   `json:"interval,omitzero"`
 }
 
 func TaskDTO(task task.Stat) Task {

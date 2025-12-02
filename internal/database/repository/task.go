@@ -47,7 +47,7 @@ func (t *Task) GetByRunID(ctx context.Context, runID int) (*model.Task, error) {
 	return model.TaskModel(task.Task, task.TaskRun), err
 }
 
-func (t *Task) GetFiltered(ctx context.Context, filter model.TaskFilter) ([]*model.Task, error) {
+func (t *Task) GetRunFiltered(ctx context.Context, filter model.TaskFilter) ([]*model.Task, error) {
 	// A default value is required for sql
 	// If no result filter is set then it will ignored anyway
 	result := model.TaskSuccess
@@ -76,6 +76,18 @@ func (t *Task) GetFiltered(ctx context.Context, filter model.TaskFilter) ([]*mod
 	return utils.SliceMap(tasks, func(task sqlc.TaskGetFilteredRow) *model.Task {
 		return model.TaskModel(task.Task, task.TaskRun)
 	}), nil
+}
+
+func (t *Task) GetRunLastAllByUser(ctx context.Context, userID int) ([]*model.Task, error) {
+	tasks, err := t.repo.queries(ctx).TaskGetLastAllByUser(ctx, int32(userID))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("get last runs by user %d | %w", userID, err)
+	}
+
+	return utils.SliceMap(tasks, func(t sqlc.TaskRun) *model.Task { return model.TaskModel(sqlc.Task{}, t) }), nil
 }
 
 func (t *Task) Create(ctx context.Context, task model.Task) error {

@@ -11,6 +11,42 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const taskGetLastAllByUser = `-- name: TaskGetLastAllByUser :many
+SELECT DISTINCT ON (task_uid) id, task_uid, user_id, run_at, result, error, duration, message
+FROM task_runs
+WHERE user_id = $1
+ORDER BY task_uid, run_at DESC
+`
+
+func (q *Queries) TaskGetLastAllByUser(ctx context.Context, userID int32) ([]TaskRun, error) {
+	rows, err := q.db.Query(ctx, taskGetLastAllByUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []TaskRun
+	for rows.Next() {
+		var i TaskRun
+		if err := rows.Scan(
+			&i.ID,
+			&i.TaskUid,
+			&i.UserID,
+			&i.RunAt,
+			&i.Result,
+			&i.Error,
+			&i.Duration,
+			&i.Message,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const taskRunCreate = `-- name: TaskRunCreate :one
 INSERT INTO task_runs (task_uid, user_id, run_at, result, message, error, duration)
 VALUES ($1, $2, $3, $4, $5, $6, $7)

@@ -95,6 +95,7 @@ type PlaylistTrack struct {
 }
 
 type Task struct {
+	ID     int32
 	Uid    string
 	Name   string
 	Active bool

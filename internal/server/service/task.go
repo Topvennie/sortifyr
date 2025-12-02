@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/topvennie/spotify_organizer/internal/database/model"
 	"github.com/topvennie/spotify_organizer/internal/database/repository"
 	"github.com/topvennie/spotify_organizer/internal/server/dto"
 	"github.com/topvennie/spotify_organizer/internal/task"
@@ -26,7 +27,7 @@ func (s *Service) NewTask() *Task {
 	}
 }
 
-func (t *Task) GetTasks() ([]dto.Task, error) {
+func (t *Task) GetTasks(ctx context.Context, userID int) ([]dto.Task, error) {
 	tasks, err := task.Manager.Tasks()
 	if err != nil {
 		zap.S().Error(err)
@@ -36,11 +37,40 @@ func (t *Task) GetTasks() ([]dto.Task, error) {
 		return []dto.Task{}, nil
 	}
 
-	return utils.SliceMap(tasks, dto.TaskDTO), nil
+	lastRuns, err := t.task.GetRunLastAllByUser(ctx, userID)
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	lastRunMap := make(map[string]*model.Task)
+	for _, lastRun := range lastRuns {
+		lastRunMap[lastRun.UID] = lastRun
+	}
+
+	taskDTOs := make([]dto.Task, 0, len(tasks))
+	for _, task := range tasks {
+		taskDTO := dto.TaskDTO(task)
+
+		if lastRun, ok := lastRunMap[task.TaskUID]; ok {
+			lastError := ""
+			if lastRun.Error != nil {
+				lastError = lastRun.Error.Error()
+			}
+
+			taskDTO.LastStatus = lastRun.Result
+			taskDTO.LastMessage = lastRun.Message
+			taskDTO.LastError = lastError
+		}
+
+		taskDTOs = append(taskDTOs, taskDTO)
+	}
+
+	return taskDTOs, nil
 }
 
 func (t *Task) GetHistory(ctx context.Context, filter dto.TaskFilter) ([]dto.TaskHistory, error) {
-	tasks, err := t.task.GetFiltered(ctx, *filter.ToModel())
+	tasks, err := t.task.GetRunFiltered(ctx, *filter.ToModel())
 	if err != nil {
 		zap.S().Error(err)
 		return nil, fiber.ErrInternalServerError

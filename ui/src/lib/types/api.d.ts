@@ -33,4 +33,24 @@ export namespace API {
     target_directory_id?: number;
     target_playlist_id?: number;
   }
+
+  export interface Task {
+    uid: string;
+    name: string;
+    status: string;
+    next_run: string;
+    last_status?: string;
+    last_run?: string;
+    last_message?: string;
+    last_error?: string;
+    interval?: number;
+  }
+
+  export interface TaskHistory extends Base {
+    name: string;
+    result: string;
+    run_at: string;
+    error?: string;
+    duration: number;
+  }
 }
