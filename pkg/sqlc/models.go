@@ -11,6 +11,50 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type GeneratorPreset string
+
+const (
+	GeneratorPresetCustom    GeneratorPreset = "custom"
+	GeneratorPresetForgotten GeneratorPreset = "forgotten"
+	GeneratorPresetTop       GeneratorPreset = "top"
+	GeneratorPresetOldTop    GeneratorPreset = "old_top"
+)
+
+func (e *GeneratorPreset) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = GeneratorPreset(s)
+	case string:
+		*e = GeneratorPreset(s)
+	default:
+		return fmt.Errorf("unsupported scan type for GeneratorPreset: %T", src)
+	}
+	return nil
+}
+
+type NullGeneratorPreset struct {
+	GeneratorPreset GeneratorPreset
+	Valid           bool // Valid is true if GeneratorPreset is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullGeneratorPreset) Scan(value interface{}) error {
+	if value == nil {
+		ns.GeneratorPreset, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.GeneratorPreset.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullGeneratorPreset) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.GeneratorPreset), nil
+}
+
 type TaskResult string
 
 const (
@@ -99,6 +143,13 @@ type DirectoryPlaylist struct {
 	ID          int32
 	DirectoryID int32
 	PlaylistID  int32
+}
+
+type Generator struct {
+	ID         int32
+	Name       string
+	Preset     GeneratorPreset
+	Parameters []byte
 }
 
 type History struct {
