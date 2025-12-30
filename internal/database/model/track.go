@@ -11,6 +11,7 @@ type Track struct {
 	SpotifyID  string
 	Name       string
 	Popularity int
+	DurationMs int
 	UpdatedAt  time.Time
 
 	// Non db fields
@@ -26,6 +27,7 @@ func TrackModel(t sqlc.Track) *Track {
 		SpotifyID:  t.SpotifyID,
 		Name:       fromString(t.Name),
 		Popularity: fromInt(t.Popularity),
+		DurationMs: fromInt(t.DurationMs),
 		UpdatedAt:  fromTime(t.UpdatedAt),
 	}
 }
@@ -35,7 +37,7 @@ func (t *Track) Equal(t2 Track) bool {
 }
 
 func (t *Track) EqualEntry(t2 Track) bool {
-	return t.Name == t2.Name && t.Popularity == t2.Popularity
+	return t.Name == t2.Name && t.Popularity == t2.Popularity && t.DurationMs == t2.DurationMs
 }
 
 type TrackArtist struct {

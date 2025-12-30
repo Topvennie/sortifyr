@@ -26,12 +26,14 @@ type exportTrack struct {
 	Username        string    `json:"username"`
 	MsPlayed        int       `json:"ms_played"`
 	SpotifyTrackURI string    `json:"spotify_track_uri"`
+	Skipped         bool      `json:"skipped"`
 }
 
 func (e exportTrack) toHistory(userID int) *model.History {
 	return &model.History{
 		UserID:   userID,
 		PlayedAt: e.StoppedAt.Add(time.Duration(-1*e.MsPlayed) * time.Millisecond),
+		Skipped:  e.Skipped,
 		Track: model.Track{
 			SpotifyID: uriToID(e.SpotifyTrackURI),
 		},

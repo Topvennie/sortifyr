@@ -194,7 +194,7 @@ func (q *Queries) PlaylistGetByUserWithOwner(ctx context.Context, userID int32) 
 }
 
 const playlistGetDuplicateTracksByUser = `-- name: PlaylistGetDuplicateTracksByUser :many
-SELECT p.id, p.spotify_id, p.name, p.description, p.public, p.track_amount, p.collaborative, p.cover_id, p.cover_url, p.owner_id, p.updated_at, p.snapshot_id, t.id, t.spotify_id, t.name, t.popularity, t.updated_at, u.id, u.uid, u.name, u.display_name, u.email
+SELECT p.id, p.spotify_id, p.name, p.description, p.public, p.track_amount, p.collaborative, p.cover_id, p.cover_url, p.owner_id, p.updated_at, p.snapshot_id, t.id, t.spotify_id, t.name, t.popularity, t.updated_at, t.duration_ms, u.id, u.uid, u.name, u.display_name, u.email
 FROM playlist_tracks pt
 JOIN (
   SELECT playlist_id, track_id
@@ -246,6 +246,7 @@ func (q *Queries) PlaylistGetDuplicateTracksByUser(ctx context.Context, userID i
 			&i.Track.Name,
 			&i.Track.Popularity,
 			&i.Track.UpdatedAt,
+			&i.Track.DurationMs,
 			&i.User.ID,
 			&i.User.Uid,
 			&i.User.Name,
@@ -263,7 +264,7 @@ func (q *Queries) PlaylistGetDuplicateTracksByUser(ctx context.Context, userID i
 }
 
 const playlistGetUnplayableTracksByUser = `-- name: PlaylistGetUnplayableTracksByUser :many
-SELECT p.id, p.spotify_id, p.name, p.description, p.public, p.track_amount, p.collaborative, p.cover_id, p.cover_url, p.owner_id, p.updated_at, p.snapshot_id, t.id, t.spotify_id, t.name, t.popularity, t.updated_at, u.id, u.uid, u.name, u.display_name, u.email
+SELECT p.id, p.spotify_id, p.name, p.description, p.public, p.track_amount, p.collaborative, p.cover_id, p.cover_url, p.owner_id, p.updated_at, p.snapshot_id, t.id, t.spotify_id, t.name, t.popularity, t.updated_at, t.duration_ms, u.id, u.uid, u.name, u.display_name, u.email
 FROM playlist_tracks pt
 LEFT JOIN playlists p ON p.id = pt.playlist_id
 LEFT JOIN tracks t ON t.id = pt.track_id
@@ -306,6 +307,7 @@ func (q *Queries) PlaylistGetUnplayableTracksByUser(ctx context.Context, userID 
 			&i.Track.Name,
 			&i.Track.Popularity,
 			&i.Track.UpdatedAt,
+			&i.Track.DurationMs,
 			&i.User.ID,
 			&i.User.Uid,
 			&i.User.Name,

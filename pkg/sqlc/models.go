@@ -161,6 +161,7 @@ type History struct {
 	ArtistID   pgtype.Int4
 	PlaylistID pgtype.Int4
 	ShowID     pgtype.Int4
+	Skipped    bool
 }
 
 type Link struct {
@@ -242,6 +243,7 @@ type Track struct {
 	Name       pgtype.Text
 	Popularity pgtype.Int4
 	UpdatedAt  pgtype.Timestamptz
+	DurationMs pgtype.Int4
 }
 
 type TrackArtist struct {

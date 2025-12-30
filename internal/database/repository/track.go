@@ -140,6 +140,7 @@ func (t *Track) Create(ctx context.Context, track *model.Track) error {
 		SpotifyID:  track.SpotifyID,
 		Name:       toString(track.Name),
 		Popularity: toInt(track.Popularity),
+		DurationMs: toInt(track.DurationMs),
 	})
 	if err != nil {
 		return fmt.Errorf("create track %+v | %w", *track, err)
@@ -169,6 +170,7 @@ func (t *Track) Update(ctx context.Context, track model.Track) error {
 		ID:         int32(track.ID),
 		Name:       toString(track.Name),
 		Popularity: toInt(track.Popularity),
+		DurationMs: toInt(track.DurationMs),
 	}); err != nil {
 		return fmt.Errorf("update track %+v | %w", track, err)
 	}

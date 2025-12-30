@@ -12,8 +12,8 @@ import (
 )
 
 const trackCreate = `-- name: TrackCreate :one
-INSERT INTO tracks (spotify_id, name, popularity)
-VALUES ($1, $2, $3)
+INSERT INTO tracks (spotify_id, name, popularity, duration_ms)
+VALUES ($1, $2, $3, $4)
 RETURNING id
 `
 
@@ -21,17 +21,23 @@ type TrackCreateParams struct {
 	SpotifyID  string
 	Name       pgtype.Text
 	Popularity pgtype.Int4
+	DurationMs pgtype.Int4
 }
 
 func (q *Queries) TrackCreate(ctx context.Context, arg TrackCreateParams) (int32, error) {
-	row := q.db.QueryRow(ctx, trackCreate, arg.SpotifyID, arg.Name, arg.Popularity)
+	row := q.db.QueryRow(ctx, trackCreate,
+		arg.SpotifyID,
+		arg.Name,
+		arg.Popularity,
+		arg.DurationMs,
+	)
 	var id int32
 	err := row.Scan(&id)
 	return id, err
 }
 
 const trackGetAll = `-- name: TrackGetAll :many
-SELECT id, spotify_id, name, popularity, updated_at
+SELECT id, spotify_id, name, popularity, updated_at, duration_ms
 FROM tracks
 `
 
@@ -50,6 +56,7 @@ func (q *Queries) TrackGetAll(ctx context.Context) ([]Track, error) {
 			&i.Name,
 			&i.Popularity,
 			&i.UpdatedAt,
+			&i.DurationMs,
 		); err != nil {
 			return nil, err
 		}
@@ -62,7 +69,7 @@ func (q *Queries) TrackGetAll(ctx context.Context) ([]Track, error) {
 }
 
 const trackGetAllBySpotify = `-- name: TrackGetAllBySpotify :many
-SELECT id, spotify_id, name, popularity, updated_at
+SELECT id, spotify_id, name, popularity, updated_at, duration_ms
 FROM tracks
 WHERE spotify_id = ANY($1::text[])
 `
@@ -82,6 +89,7 @@ func (q *Queries) TrackGetAllBySpotify(ctx context.Context, dollar_1 []string) (
 			&i.Name,
 			&i.Popularity,
 			&i.UpdatedAt,
+			&i.DurationMs,
 		); err != nil {
 			return nil, err
 		}
@@ -94,7 +102,7 @@ func (q *Queries) TrackGetAllBySpotify(ctx context.Context, dollar_1 []string) (
 }
 
 const trackGetByName = `-- name: TrackGetByName :many
-SELECT id, spotify_id, name, popularity, updated_at
+SELECT id, spotify_id, name, popularity, updated_at, duration_ms
 FROM tracks
 WHERE name = $1
 `
@@ -114,6 +122,7 @@ func (q *Queries) TrackGetByName(ctx context.Context, name pgtype.Text) ([]Track
 			&i.Name,
 			&i.Popularity,
 			&i.UpdatedAt,
+			&i.DurationMs,
 		); err != nil {
 			return nil, err
 		}
@@ -126,7 +135,7 @@ func (q *Queries) TrackGetByName(ctx context.Context, name pgtype.Text) ([]Track
 }
 
 const trackGetByPlaylist = `-- name: TrackGetByPlaylist :many
-SELECT t.id, t.spotify_id, t.name, t.popularity, t.updated_at
+SELECT t.id, t.spotify_id, t.name, t.popularity, t.updated_at, t.duration_ms
 FROM tracks t
 LEFT JOIN playlist_tracks pt ON pt.track_id = t.id
 WHERE pt.playlist_id = $1 AND pt.deleted_at IS NULL
@@ -147,6 +156,7 @@ func (q *Queries) TrackGetByPlaylist(ctx context.Context, playlistID int32) ([]T
 			&i.Name,
 			&i.Popularity,
 			&i.UpdatedAt,
+			&i.DurationMs,
 		); err != nil {
 			return nil, err
 		}
@@ -159,7 +169,7 @@ func (q *Queries) TrackGetByPlaylist(ctx context.Context, playlistID int32) ([]T
 }
 
 const trackGetBySpotify = `-- name: TrackGetBySpotify :one
-SELECT id, spotify_id, name, popularity, updated_at
+SELECT id, spotify_id, name, popularity, updated_at, duration_ms
 FROM tracks
 WHERE spotify_id = $1
 `
@@ -173,12 +183,13 @@ func (q *Queries) TrackGetBySpotify(ctx context.Context, spotifyID string) (Trac
 		&i.Name,
 		&i.Popularity,
 		&i.UpdatedAt,
+		&i.DurationMs,
 	)
 	return i, err
 }
 
 const trackGetCreatedFilteredPopulated = `-- name: TrackGetCreatedFilteredPopulated :many
-SELECT t.id, t.spotify_id, t.name, t.popularity, t.updated_at, pt.id, pt.playlist_id, pt.track_id, pt.deleted_at, pt.created_at, p.id, p.spotify_id, p.name, p.description, p.public, p.track_amount, p.collaborative, p.cover_id, p.cover_url, p.owner_id, p.updated_at, p.snapshot_id, u.id, u.uid, u.name, u.display_name, u.email
+SELECT t.id, t.spotify_id, t.name, t.popularity, t.updated_at, t.duration_ms, pt.id, pt.playlist_id, pt.track_id, pt.deleted_at, pt.created_at, p.id, p.spotify_id, p.name, p.description, p.public, p.track_amount, p.collaborative, p.cover_id, p.cover_url, p.owner_id, p.updated_at, p.snapshot_id, u.id, u.uid, u.name, u.display_name, u.email
 FROM tracks t
 LEFT JOIN playlist_tracks pt ON pt.track_id = t.id
 LEFT JOIN playlist_users pu ON pu.playlist_id = pt.playlist_id
@@ -228,6 +239,7 @@ func (q *Queries) TrackGetCreatedFilteredPopulated(ctx context.Context, arg Trac
 			&i.Track.Name,
 			&i.Track.Popularity,
 			&i.Track.UpdatedAt,
+			&i.Track.DurationMs,
 			&i.PlaylistTrack.ID,
 			&i.PlaylistTrack.PlaylistID,
 			&i.PlaylistTrack.TrackID,
@@ -262,7 +274,7 @@ func (q *Queries) TrackGetCreatedFilteredPopulated(ctx context.Context, arg Trac
 }
 
 const trackGetDeletedFilteredPopulated = `-- name: TrackGetDeletedFilteredPopulated :many
-SELECT t.id, t.spotify_id, t.name, t.popularity, t.updated_at, pt.id, pt.playlist_id, pt.track_id, pt.deleted_at, pt.created_at, p.id, p.spotify_id, p.name, p.description, p.public, p.track_amount, p.collaborative, p.cover_id, p.cover_url, p.owner_id, p.updated_at, p.snapshot_id, u.id, u.uid, u.name, u.display_name, u.email
+SELECT t.id, t.spotify_id, t.name, t.popularity, t.updated_at, t.duration_ms, pt.id, pt.playlist_id, pt.track_id, pt.deleted_at, pt.created_at, p.id, p.spotify_id, p.name, p.description, p.public, p.track_amount, p.collaborative, p.cover_id, p.cover_url, p.owner_id, p.updated_at, p.snapshot_id, u.id, u.uid, u.name, u.display_name, u.email
 FROM tracks t
 LEFT JOIN playlist_tracks pt ON pt.track_id = t.id
 LEFT JOIN playlist_users pu ON pu.playlist_id = pt.playlist_id
@@ -312,6 +324,7 @@ func (q *Queries) TrackGetDeletedFilteredPopulated(ctx context.Context, arg Trac
 			&i.Track.Name,
 			&i.Track.Popularity,
 			&i.Track.UpdatedAt,
+			&i.Track.DurationMs,
 			&i.PlaylistTrack.ID,
 			&i.PlaylistTrack.PlaylistID,
 			&i.PlaylistTrack.TrackID,
@@ -350,6 +363,7 @@ UPDATE tracks
 SET
   name = coalesce($2, name),
   popularity = coalesce($3, popularity),
+  duration_ms = coalesce($4, duration_ms),
   updated_at = NOW()
 WHERE id = $1
 `
@@ -358,9 +372,15 @@ type TrackUpdateParams struct {
 	ID         int32
 	Name       pgtype.Text
 	Popularity pgtype.Int4
+	DurationMs pgtype.Int4
 }
 
 func (q *Queries) TrackUpdate(ctx context.Context, arg TrackUpdateParams) error {
-	_, err := q.db.Exec(ctx, trackUpdate, arg.ID, arg.Name, arg.Popularity)
+	_, err := q.db.Exec(ctx, trackUpdate,
+		arg.ID,
+		arg.Name,
+		arg.Popularity,
+		arg.DurationMs,
+	)
 	return err
 }

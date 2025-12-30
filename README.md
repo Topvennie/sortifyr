@@ -45,10 +45,10 @@ A web application to help organize and automate your Spotify playlists.
   An overview of your history.
   It will show any track that you listened to or was played in a jam that you were a part of.
 
-  A track is only counted as played after you listened to it for at least 20 seconds, however
-  due to the internal workings of the application it can be up to 40 seconds before a track is considered played.
+  Sortifyr will track all the data is needs in the background however it can not access any past data.
+  In the settings page you can find instructions how you can upload all your historic Spotify data.
 
-  In the settings page you can upload all your historic Spotify data.
+  It's highly recommended to do so.
 
   ![Track history](./screenshots/track_history.png)
 </details>

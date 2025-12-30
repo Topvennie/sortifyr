@@ -12,8 +12,8 @@ import (
 )
 
 const historyCreate = `-- name: HistoryCreate :one
-INSERT INTO history (user_id, track_id, played_at, album_id, artist_id, playlist_id, show_id)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO history (user_id, track_id, played_at, album_id, artist_id, playlist_id, show_id, skipped)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 RETURNING id
 `
 
@@ -25,6 +25,7 @@ type HistoryCreateParams struct {
 	ArtistID   pgtype.Int4
 	PlaylistID pgtype.Int4
 	ShowID     pgtype.Int4
+	Skipped    bool
 }
 
 func (q *Queries) HistoryCreate(ctx context.Context, arg HistoryCreateParams) (int32, error) {
@@ -36,6 +37,7 @@ func (q *Queries) HistoryCreate(ctx context.Context, arg HistoryCreateParams) (i
 		arg.ArtistID,
 		arg.PlaylistID,
 		arg.ShowID,
+		arg.Skipped,
 	)
 	var id int32
 	err := row.Scan(&id)
@@ -43,11 +45,12 @@ func (q *Queries) HistoryCreate(ctx context.Context, arg HistoryCreateParams) (i
 }
 
 const historyCreateBatch = `-- name: HistoryCreateBatch :exec
-INSERT INTO history (user_id, track_id, played_at)
+INSERT INTO history (user_id, track_id, played_at, skipped)
 VALUES (
   UNNEST($1::int[]),
   UNNEST($2::int[]),
-  UNNEST($3::timestamptz[])
+  UNNEST($3::timestamptz[]),
+  UNNEST($4::boolean[])
 )
 `
 
@@ -55,10 +58,16 @@ type HistoryCreateBatchParams struct {
 	Column1 []int32
 	Column2 []int32
 	Column3 []pgtype.Timestamptz
+	Column4 []bool
 }
 
 func (q *Queries) HistoryCreateBatch(ctx context.Context, arg HistoryCreateBatchParams) error {
-	_, err := q.db.Exec(ctx, historyCreateBatch, arg.Column1, arg.Column2, arg.Column3)
+	_, err := q.db.Exec(ctx, historyCreateBatch,
+		arg.Column1,
+		arg.Column2,
+		arg.Column3,
+		arg.Column4,
+	)
 	return err
 }
 
@@ -77,50 +86,29 @@ func (q *Queries) HistoryDeleteUserOlder(ctx context.Context, arg HistoryDeleteU
 	return err
 }
 
-const historyGetLatestByUser = `-- name: HistoryGetLatestByUser :one
-SELECT id, user_id, track_id, played_at, album_id, artist_id, playlist_id, show_id
-FROM history
-WHERE user_id = $1
-ORDER BY played_at DESC
-LIMIT 1
-`
-
-func (q *Queries) HistoryGetLatestByUser(ctx context.Context, userID int32) (History, error) {
-	row := q.db.QueryRow(ctx, historyGetLatestByUser, userID)
-	var i History
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.TrackID,
-		&i.PlayedAt,
-		&i.AlbumID,
-		&i.ArtistID,
-		&i.PlaylistID,
-		&i.ShowID,
-	)
-	return i, err
-}
-
 const historyGetPopulatedFiltered = `-- name: HistoryGetPopulatedFiltered :many
-SELECT h.id, h.user_id, h.track_id, h.played_at, h.album_id, h.artist_id, h.playlist_id, h.show_id, t.id, t.spotify_id, t.name, t.popularity, t.updated_at
+SELECT h.id, h.user_id, h.track_id, h.played_at, h.album_id, h.artist_id, h.playlist_id, h.show_id, h.skipped, t.id, t.spotify_id, t.name, t.popularity, t.updated_at, t.duration_ms
 FROM history h
 LEFT JOIN tracks t ON t.id = h.track_id
 WHERE 
   h.user_id = $1::int AND
-  (h.played_at >= $4::timestamptz OR NOT $6) AND 
-  (h.played_at <= $5::timestamptz OR NOT $7)
+  (h.played_at >= $4::timestamptz OR NOT $7) AND 
+  (h.played_at <= $5::timestamptz OR NOT $8) AND
+  (h.skipped = $6 OR NOT $9)
 ORDER BY h.played_at DESC
 LIMIT $2 OFFSET $3
 `
 
 type HistoryGetPopulatedFilteredParams struct {
-	Column1     int32
-	Limit       int32
-	Offset      int32
-	Column4     pgtype.Timestamptz
-	Column5     pgtype.Timestamptz
-	FilterStart interface{}
-	FilterEnd   interface{}
+	Column1       int32
+	Limit         int32
+	Offset        int32
+	Column4       pgtype.Timestamptz
+	Column5       pgtype.Timestamptz
+	Skipped       bool
+	FilterStart   interface{}
+	FilterEnd     interface{}
+	FilterSkipped interface{}
 }
 
 type HistoryGetPopulatedFilteredRow struct {
@@ -135,8 +123,10 @@ func (q *Queries) HistoryGetPopulatedFiltered(ctx context.Context, arg HistoryGe
 		arg.Offset,
 		arg.Column4,
 		arg.Column5,
+		arg.Skipped,
 		arg.FilterStart,
 		arg.FilterEnd,
+		arg.FilterSkipped,
 	)
 	if err != nil {
 		return nil, err
@@ -154,11 +144,13 @@ func (q *Queries) HistoryGetPopulatedFiltered(ctx context.Context, arg HistoryGe
 			&i.History.ArtistID,
 			&i.History.PlaylistID,
 			&i.History.ShowID,
+			&i.History.Skipped,
 			&i.Track.ID,
 			&i.Track.SpotifyID,
 			&i.Track.Name,
 			&i.Track.Popularity,
 			&i.Track.UpdatedAt,
+			&i.Track.DurationMs,
 		); err != nil {
 			return nil, err
 		}
@@ -168,4 +160,46 @@ func (q *Queries) HistoryGetPopulatedFiltered(ctx context.Context, arg HistoryGe
 		return nil, err
 	}
 	return items, nil
+}
+
+const historyGetPreviousPopulated = `-- name: HistoryGetPreviousPopulated :one
+SELECT h.id, h.user_id, h.track_id, h.played_at, h.album_id, h.artist_id, h.playlist_id, h.show_id, h.skipped, t.id, t.spotify_id, t.name, t.popularity, t.updated_at, t.duration_ms
+FROM history h
+LEFT JOIN tracks t ON t.id = h.track_id
+WHERE h.played_at < $1 AND h.user_id = $2
+ORDER BY h.played_at DESC
+LIMIT 1
+`
+
+type HistoryGetPreviousPopulatedParams struct {
+	PlayedAt pgtype.Timestamptz
+	UserID   int32
+}
+
+type HistoryGetPreviousPopulatedRow struct {
+	History History
+	Track   Track
+}
+
+func (q *Queries) HistoryGetPreviousPopulated(ctx context.Context, arg HistoryGetPreviousPopulatedParams) (HistoryGetPreviousPopulatedRow, error) {
+	row := q.db.QueryRow(ctx, historyGetPreviousPopulated, arg.PlayedAt, arg.UserID)
+	var i HistoryGetPreviousPopulatedRow
+	err := row.Scan(
+		&i.History.ID,
+		&i.History.UserID,
+		&i.History.TrackID,
+		&i.History.PlayedAt,
+		&i.History.AlbumID,
+		&i.History.ArtistID,
+		&i.History.PlaylistID,
+		&i.History.ShowID,
+		&i.History.Skipped,
+		&i.Track.ID,
+		&i.Track.SpotifyID,
+		&i.Track.Name,
+		&i.Track.Popularity,
+		&i.Track.UpdatedAt,
+		&i.Track.DurationMs,
+	)
+	return i, err
 }

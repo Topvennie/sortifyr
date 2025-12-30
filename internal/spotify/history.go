@@ -8,14 +8,6 @@ import (
 )
 
 func (c *client) historySync(ctx context.Context, user model.User) error {
-	latest, err := c.history.GetLatest(ctx, user.ID)
-	if err != nil {
-		return err
-	}
-	if latest == nil {
-		latest = &model.History{}
-	}
-
 	current, err := c.api.PlayerGetCurrent(ctx, user)
 	if err != nil {
 		return err
@@ -25,19 +17,22 @@ func (c *client) historySync(ctx context.Context, user model.User) error {
 	}
 
 	now := time.Now()
+	currentStart := now.Add(time.Duration(-current.ProgressMs) * time.Millisecond)
 
-	if !current.IsPlaying {
-		return nil
+	previous, err := c.history.GetPreviousPopulated(ctx, user.ID, now)
+	if err != nil {
+		return err
+	}
+	if previous == nil {
+		previous = &model.History{}
 	}
 
-	// Listen at least 20 seconds
-	if current.ProgressMs < 20*1000 {
-		return nil
-	}
-
-	// Add a 5 second buffer
-	if latest.PlayedAt.Add(5 * time.Second).After(now.Add(time.Duration(-current.ProgressMs) * time.Millisecond)) {
-		return nil
+	if previous.Track.SpotifyID == current.Track.SpotifyID {
+		// Same track
+		// Let's give it a 5 second buffer
+		if previous.PlayedAt.Add(5 * time.Second).After(currentStart) {
+			return nil
+		}
 	}
 
 	track := current.Track.ToModel()
@@ -47,7 +42,7 @@ func (c *client) historySync(ctx context.Context, user model.User) error {
 
 	history := model.History{
 		UserID:   user.ID,
-		PlayedAt: now.Add(time.Duration(-current.ProgressMs) * time.Millisecond),
+		PlayedAt: currentStart,
 		TrackID:  track.ID,
 	}
 

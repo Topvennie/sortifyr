@@ -51,10 +51,9 @@ WHERE
 ORDER BY pt.deleted_at DESC
 LIMIT $1 OFFSET $2;
 
-
 -- name: TrackCreate :one
-INSERT INTO tracks (spotify_id, name, popularity)
-VALUES ($1, $2, $3)
+INSERT INTO tracks (spotify_id, name, popularity, duration_ms)
+VALUES ($1, $2, $3, $4)
 RETURNING id;
 
 -- name: TrackUpdate :exec
@@ -62,5 +61,6 @@ UPDATE tracks
 SET
   name = coalesce(sqlc.narg('name'), name),
   popularity = coalesce(sqlc.narg('popularity'), popularity),
+  duration_ms = coalesce(sqlc.narg('duration_ms'), duration_ms),
   updated_at = NOW()
 WHERE id = $1;

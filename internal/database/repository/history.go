@@ -23,27 +23,40 @@ func (r *Repository) NewHistory() *History {
 	}
 }
 
-func (h *History) GetLatest(ctx context.Context, userID int) (*model.History, error) {
-	history, err := h.repo.queries(ctx).HistoryGetLatestByUser(ctx, int32(userID))
+func (h *History) GetPreviousPopulated(ctx context.Context, userID int, playedAt time.Time) (*model.History, error) {
+	previous, err := h.repo.queries(ctx).HistoryGetPreviousPopulated(ctx, sqlc.HistoryGetPreviousPopulatedParams{
+		PlayedAt: toTime(playedAt),
+		UserID:   int32(userID),
+	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("get latest history %w", err)
+		return nil, fmt.Errorf("get previous populated %s | %d | %w", playedAt, userID, err)
 	}
 
-	return model.HistoryModel(history), nil
+	previousModel := model.HistoryModel(previous.History)
+	previousModel.Track = *model.TrackModel(previous.Track)
+
+	return previousModel, nil
 }
 
 func (h *History) GetPopulatedFiltered(ctx context.Context, filter model.HistoryFilter) ([]*model.History, error) {
+	skipped := false
+	if filter.Skipped != nil {
+		skipped = *filter.Skipped
+	}
+
 	history, err := h.repo.queries(ctx).HistoryGetPopulatedFiltered(ctx, sqlc.HistoryGetPopulatedFilteredParams{
-		Column1:     int32(filter.UserID),
-		Limit:       int32(filter.Limit),
-		Offset:      int32(filter.Offset),
-		Column4:     toTime(filter.Start),
-		FilterStart: !filter.Start.IsZero(),
-		Column5:     toTime(filter.End),
-		FilterEnd:   !filter.End.IsZero(),
+		Column1:       int32(filter.UserID),
+		Limit:         int32(filter.Limit),
+		Offset:        int32(filter.Offset),
+		Column4:       toTime(filter.Start),
+		FilterStart:   !filter.Start.IsZero(),
+		Column5:       toTime(filter.End),
+		FilterEnd:     !filter.End.IsZero(),
+		Skipped:       skipped,
+		FilterSkipped: filter.Skipped != nil,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -65,6 +78,7 @@ func (h *History) Create(ctx context.Context, history *model.History) error {
 		UserID:     int32(history.UserID),
 		TrackID:    int32(history.TrackID),
 		PlayedAt:   toTime(history.PlayedAt),
+		Skipped:    history.Skipped,
 		AlbumID:    toInt(history.AlbumID),
 		ArtistID:   toInt(history.ArtistID),
 		PlaylistID: toInt(history.PlaylistID),
@@ -83,17 +97,20 @@ func (h *History) CreateBatch(ctx context.Context, histories []model.History) er
 	userIDs := make([]int32, 0, len(histories))
 	trackIDs := make([]int32, 0, len(histories))
 	playedAts := make([]pgtype.Timestamptz, 0, len(histories))
+	skipped := make([]bool, 0, len(histories))
 
 	for i := range histories {
 		userIDs = append(userIDs, int32(histories[i].UserID))
 		trackIDs = append(trackIDs, int32(histories[i].TrackID))
 		playedAts = append(playedAts, toTime(histories[i].PlayedAt))
+		skipped = append(skipped, histories[i].Skipped)
 	}
 
 	if err := h.repo.queries(ctx).HistoryCreateBatch(ctx, sqlc.HistoryCreateBatchParams{
 		Column1: userIDs,
 		Column2: trackIDs,
 		Column3: playedAts,
+		Column4: skipped,
 	}); err != nil {
 		return fmt.Errorf("create history batch %w", err)
 	}
