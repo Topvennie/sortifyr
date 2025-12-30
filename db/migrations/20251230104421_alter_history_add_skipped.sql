@@ -1,10 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 ALTER TABLE history
-ADD COLUMN skipped BOOLEAN NOT NULL DEFAULT false;
-
-ALTER TABLE history
-ALTER COLUMN skipped DROP DEFAULT;
+ADD COLUMN skipped BOOLEAN;
 
 ALTER TABLE tracks
 ADD COLUMN duration_ms INTEGER;

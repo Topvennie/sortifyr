@@ -136,8 +136,8 @@ func (t *Task) Update(ctx context.Context, task model.Task) error {
 	if err := t.repo.queries(ctx).TaskUpdate(ctx, sqlc.TaskUpdateParams{
 		Uid:       task.UID,
 		Name:      toString(task.Name),
-		Active:    toBool(task.Active),
-		Recurring: toBool(task.Recurring),
+		Active:    toBool(&task.Active),
+		Recurring: toBool(&task.Recurring),
 	}); err != nil {
 		return fmt.Errorf("update task %+v | %w", task, err)
 	}

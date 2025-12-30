@@ -25,7 +25,7 @@ type HistoryCreateParams struct {
 	ArtistID   pgtype.Int4
 	PlaylistID pgtype.Int4
 	ShowID     pgtype.Int4
-	Skipped    bool
+	Skipped    pgtype.Bool
 }
 
 func (q *Queries) HistoryCreate(ctx context.Context, arg HistoryCreateParams) (int32, error) {
@@ -94,7 +94,7 @@ WHERE
   h.user_id = $1::int AND
   (h.played_at >= $4::timestamptz OR NOT $7) AND 
   (h.played_at <= $5::timestamptz OR NOT $8) AND
-  (h.skipped = $6 OR NOT $9)
+  (h.skipped = $6::boolean OR NOT $9)
 ORDER BY h.played_at DESC
 LIMIT $2 OFFSET $3
 `
@@ -105,7 +105,7 @@ type HistoryGetPopulatedFilteredParams struct {
 	Offset        int32
 	Column4       pgtype.Timestamptz
 	Column5       pgtype.Timestamptz
-	Skipped       bool
+	Column6       bool
 	FilterStart   interface{}
 	FilterEnd     interface{}
 	FilterSkipped interface{}
@@ -123,7 +123,7 @@ func (q *Queries) HistoryGetPopulatedFiltered(ctx context.Context, arg HistoryGe
 		arg.Offset,
 		arg.Column4,
 		arg.Column5,
-		arg.Skipped,
+		arg.Column6,
 		arg.FilterStart,
 		arg.FilterEnd,
 		arg.FilterSkipped,
@@ -202,4 +202,72 @@ func (q *Queries) HistoryGetPreviousPopulated(ctx context.Context, arg HistoryGe
 		&i.Track.DurationMs,
 	)
 	return i, err
+}
+
+const historyGetSkippedUnknownPopulated = `-- name: HistoryGetSkippedUnknownPopulated :many
+SELECT h.id, h.user_id, h.track_id, h.played_at, h.album_id, h.artist_id, h.playlist_id, h.show_id, h.skipped, t.id, t.spotify_id, t.name, t.popularity, t.updated_at, t.duration_ms
+FROM history h
+LEFT JOIN tracks t ON t.id = h.track_id
+WHERE h.skipped IS NULL AND h.user_id = $1
+ORDER BY played_at ASC
+`
+
+type HistoryGetSkippedUnknownPopulatedRow struct {
+	History History
+	Track   Track
+}
+
+func (q *Queries) HistoryGetSkippedUnknownPopulated(ctx context.Context, userID int32) ([]HistoryGetSkippedUnknownPopulatedRow, error) {
+	rows, err := q.db.Query(ctx, historyGetSkippedUnknownPopulated, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []HistoryGetSkippedUnknownPopulatedRow
+	for rows.Next() {
+		var i HistoryGetSkippedUnknownPopulatedRow
+		if err := rows.Scan(
+			&i.History.ID,
+			&i.History.UserID,
+			&i.History.TrackID,
+			&i.History.PlayedAt,
+			&i.History.AlbumID,
+			&i.History.ArtistID,
+			&i.History.PlaylistID,
+			&i.History.ShowID,
+			&i.History.Skipped,
+			&i.Track.ID,
+			&i.Track.SpotifyID,
+			&i.Track.Name,
+			&i.Track.Popularity,
+			&i.Track.UpdatedAt,
+			&i.Track.DurationMs,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const historyUpdate = `-- name: HistoryUpdate :exec
+UPDATE history
+SET 
+  played_at = coalesce($2, played_at),
+  skipped = coalesce($3, skipped)
+WHERE id = $1
+`
+
+type HistoryUpdateParams struct {
+	ID       int32
+	PlayedAt pgtype.Timestamptz
+	Skipped  pgtype.Bool
+}
+
+func (q *Queries) HistoryUpdate(ctx context.Context, arg HistoryUpdateParams) error {
+	_, err := q.db.Exec(ctx, historyUpdate, arg.ID, arg.PlayedAt, arg.Skipped)
+	return err
 }

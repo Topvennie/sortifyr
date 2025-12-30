@@ -2,6 +2,7 @@ package spotify
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/topvennie/sortifyr/internal/database/model"
@@ -175,17 +176,13 @@ func (c *client) taskPlaylist(ctx context.Context, users []model.User, results [
 		if err := c.playlistSync(ctx, user); err != nil {
 			results[i].Error = fmt.Errorf("synchronize playlists %w", err)
 		}
-	}
 
-	if err := c.playlistUpdate(ctx, users[0]); err != nil {
-		for i := range results {
-			results[i].Error = fmt.Errorf("update playlists %w", err)
+		if err := c.playlistUpdate(ctx, user); err != nil {
+			results[i].Error = errors.Join(fmt.Errorf("update playlists %w", err), results[i].Error)
 		}
-	}
 
-	if err := c.playlistCoverSync(ctx, users[0]); err != nil {
-		for i := range results {
-			results[i].Error = fmt.Errorf("synchronize playlist covers %w", err)
+		if err := c.playlistCoverSync(ctx, user); err != nil {
+			results[i].Error = errors.Join(fmt.Errorf("synchronize playlist covers %w", err), results[i].Error)
 		}
 	}
 }
@@ -195,17 +192,13 @@ func (c *client) taskAlbum(ctx context.Context, users []model.User, results []ta
 		if err := c.albumSync(ctx, user); err != nil {
 			results[i].Error = fmt.Errorf("synchronize albums %w", err)
 		}
-	}
 
-	if err := c.albumUpdate(ctx, users[0]); err != nil {
-		for i := range users {
-			results[i].Error = fmt.Errorf("update albums %w", err)
+		if err := c.albumUpdate(ctx, user); err != nil {
+			results[i].Error = errors.Join(fmt.Errorf("update albums %w", err), results[i].Error)
 		}
-	}
 
-	if err := c.albumCoverSync(ctx, users[0]); err != nil {
-		for i := range users {
-			results[i].Error = fmt.Errorf("synchronize album covers %w", err)
+		if err := c.albumCoverSync(ctx, user); err != nil {
+			results[i].Error = errors.Join(fmt.Errorf("synchronize album covers %w", err), results[i].Error)
 		}
 	}
 }
@@ -223,17 +216,13 @@ func (c *client) taskShow(ctx context.Context, users []model.User, results []tas
 		if err := c.showSync(ctx, user); err != nil {
 			results[i].Error = fmt.Errorf("synchronize shows %w", err)
 		}
-	}
 
-	if err := c.showUpdate(ctx, users[0]); err != nil {
-		for i := range users {
-			results[i].Error = fmt.Errorf("update shows %w", err)
+		if err := c.showUpdate(ctx, user); err != nil {
+			results[i].Error = errors.Join(fmt.Errorf("update shows %w", err), results[i].Error)
 		}
-	}
 
-	if err := c.showCoverSync(ctx, users[0]); err != nil {
-		for i := range users {
-			results[i].Error = fmt.Errorf("synchronize show covers %w", err)
+		if err := c.showCoverSync(ctx, user); err != nil {
+			results[i].Error = errors.Join(fmt.Errorf("synchronize shows covers %w", err), results[i].Error)
 		}
 	}
 }
@@ -242,6 +231,12 @@ func (c *client) taskTrack(ctx context.Context, users []model.User, results []ta
 	if err := c.trackUpdate(ctx, users[0]); err != nil {
 		for i := range users {
 			results[i].Error = fmt.Errorf("update tracks %w", err)
+		}
+	}
+
+	for i, user := range users {
+		if err := c.historySkipped(ctx, user); err != nil {
+			results[i].Error = errors.Join(fmt.Errorf("update historic data %w", err), results[i].Error)
 		}
 	}
 }

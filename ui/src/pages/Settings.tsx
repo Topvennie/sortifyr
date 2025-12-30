@@ -44,6 +44,7 @@ export const Settings = () => {
             <p>3. When Spotify emails your the download link, save the .zip file to your computer.</p>
             <p>4. Click the button below and choose the .zip file to start the import.</p>
           </Stack>
+          <p className="text-red-500">This will clear all historic data before the most recent song in the zip file.</p>
           <FileButton onChange={handleExport} accept={CONTENT_TYPE.ZIP}>
             {(props) => (
               <div>

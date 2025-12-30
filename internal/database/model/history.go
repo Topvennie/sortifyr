@@ -11,7 +11,7 @@ type History struct {
 	UserID     int
 	TrackID    int
 	PlayedAt   time.Time
-	Skipped    bool
+	Skipped    *bool
 	AlbumID    int
 	ArtistID   int
 	PlaylistID int
@@ -27,7 +27,7 @@ func HistoryModel(h sqlc.History) *History {
 		ID:         int(h.ID),
 		TrackID:    int(h.TrackID),
 		PlayedAt:   h.PlayedAt.Time,
-		Skipped:    h.Skipped,
+		Skipped:    fromBool(h.Skipped),
 		AlbumID:    fromInt(h.AlbumID),
 		ArtistID:   fromInt(h.ArtistID),
 		PlaylistID: fromInt(h.PlaylistID),

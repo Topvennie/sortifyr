@@ -14,9 +14,16 @@ WHERE
   h.user_id = $1::int AND
   (h.played_at >= $4::timestamptz OR NOT @filter_start) AND 
   (h.played_at <= $5::timestamptz OR NOT @filter_end) AND
-  (h.skipped = $6 OR NOT @filter_skipped)
+  (h.skipped = $6::boolean OR NOT @filter_skipped)
 ORDER BY h.played_at DESC
 LIMIT $2 OFFSET $3;
+
+-- name: HistoryGetSkippedUnknownPopulated :many
+SELECT sqlc.embed(h), sqlc.embed(t)
+FROM history h
+LEFT JOIN tracks t ON t.id = h.track_id
+WHERE h.skipped IS NULL AND h.user_id = $1
+ORDER BY played_at ASC;
  
 -- name: HistoryCreate :one
 INSERT INTO history (user_id, track_id, played_at, album_id, artist_id, playlist_id, show_id, skipped)
@@ -31,6 +38,13 @@ VALUES (
   UNNEST($3::timestamptz[]),
   UNNEST($4::boolean[])
 );
+
+-- name: HistoryUpdate :exec
+UPDATE history
+SET 
+  played_at = coalesce(sqlc.narg('played_at'), played_at),
+  skipped = coalesce(sqlc.narg('skipped'), skipped)
+WHERE id = $1;
 
 -- name: HistoryDeleteUserOlder :exec
 DELETE FROM history

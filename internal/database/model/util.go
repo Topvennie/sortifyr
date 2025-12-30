@@ -7,37 +7,33 @@ import (
 )
 
 func fromString(s pgtype.Text) string {
-	result := ""
 	if s.Valid {
-		result = s.String
+		return s.String
 	}
 
-	return result
+	return ""
 }
 
 func fromInt(i pgtype.Int4) int {
-	result := 0
 	if i.Valid {
-		result = int(i.Int32)
+		return int(i.Int32)
 	}
 
-	return result
+	return 0
 }
 
-func fromBool(b pgtype.Bool) bool {
-	result := false
+func fromBool(b pgtype.Bool) *bool {
 	if b.Valid {
-		result = b.Bool
+		return &b.Bool
 	}
 
-	return result
+	return nil
 }
 
 func fromTime(t pgtype.Timestamptz) time.Time {
-	result := time.Time{}
 	if t.Valid {
-		result = t.Time
+		return t.Time
 	}
 
-	return result
+	return time.Time{}
 }

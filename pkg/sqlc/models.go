@@ -161,7 +161,7 @@ type History struct {
 	ArtistID   pgtype.Int4
 	PlaylistID pgtype.Int4
 	ShowID     pgtype.Int4
-	Skipped    bool
+	Skipped    pgtype.Bool
 }
 
 type Link struct {

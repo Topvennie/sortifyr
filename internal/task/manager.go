@@ -87,6 +87,7 @@ func (m *manager) Add(ctx context.Context, newTask Task) error {
 		// Update it
 		task.Name = newTask.Name()
 		task.Active = isRecurring
+		task.Recurring = isRecurring
 		if err := m.repoTask.Update(ctx, *task); err != nil {
 			return err
 		}

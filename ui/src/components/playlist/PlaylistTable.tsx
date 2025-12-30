@@ -37,12 +37,16 @@ export const PlaylistTable = ({ playlists, isLoading }: Props) => {
         {
           accessor: "public",
           textAlign: "right",
-          render: ({ public: p }) => (
-            <div className="flex justify-end">
-              {p ? <FaCheck /> : <FaX />}
-            </div>
+          render: ({ public: p }) => {
+            if (p === undefined) return null
 
-          )
+            return (
+              <div className="flex justify-end">
+                {p ? <FaCheck /> : <FaX />}
+              </div>
+
+            )
+          }
         },
       ]}
       records={records}

@@ -10,9 +10,9 @@ export interface Playlist {
   owner?: User;
   name: string;
   description?: string;
-  public: boolean;
+  public?: boolean;
   trackAmount: number;
-  collaborative: boolean;
+  collaborative?: boolean;
   hasCover: boolean;
 }
 

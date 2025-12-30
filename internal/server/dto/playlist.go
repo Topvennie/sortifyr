@@ -11,9 +11,9 @@ type Playlist struct {
 	Owner         User   `json:"owner,omitzero"`
 	Name          string `json:"name"`
 	Description   string `json:"description,omitzero"`
-	Public        bool   `json:"public"`
+	Public        *bool  `json:"public,omitzero"`
 	TrackAmount   int    `json:"track_amount"`
-	Collaborative bool   `json:"collaborative"`
+	Collaborative *bool  `json:"collaborative,omitzero"`
 	HasCover      bool   `json:"has_cover"`
 }
 

@@ -29,10 +29,31 @@ func (c *client) historySync(ctx context.Context, user model.User) error {
 
 	if previous.Track.SpotifyID == current.Track.SpotifyID {
 		// Same track
-		// Let's give it a 5 second buffer
-		if previous.PlayedAt.Add(5 * time.Second).After(currentStart) {
+		// We don't know if the users is still listening for the first,
+		// has it on repeat or simply paused it for a while.
+		// Check first if it's still the same listening time (add a small buffer to count for e.g. network latency)
+		if previous.PlayedAt.Add(10 * time.Second).After(currentStart) {
+			// User is still in the same listen
 			return nil
 		}
+		// Now the user has either paused it for some time or is listening to it on repeat.
+		// Let's assume if the starting time of the current == the end time of the previous
+		// that the user is listening on repeat.
+		// To account for small time differences from crossplay, network latency, ... we'll againa add a buffer
+		// but we need to add the buffer on both sides.
+		previousEnd := previous.PlayedAt.Add(time.Duration(previous.Track.DurationMs) * time.Millisecond)
+		if !previousEnd.Add(-20*time.Second).Before(currentStart) || !previousEnd.Add(20*time.Second).After(currentStart) {
+			// User has paused for a while.
+			// We could exit now and it would cover all cases except if
+			// the user now starts listening to the song on repeat
+			// To account for that we can move the playedAt time from the previous listen to the start
+			// of the current track.
+			// It's not perfect but it's the best we can do with the limited information
+			previous.PlayedAt = currentStart
+			return c.history.Update(ctx, *previous)
+		}
+
+		// We now know that the user is listening to the track on repeat, so let's add it again
 	}
 
 	track := current.Track.ToModel()
@@ -162,6 +183,44 @@ func (c *client) historyShowCheck(ctx context.Context, show *model.Show) error {
 		}
 	} else {
 		show.ID = showDB.ID
+	}
+
+	return nil
+}
+
+// historySkipped will populate the skipped field as much as it can
+func (c *client) historySkipped(ctx context.Context, user model.User) error {
+	histories, err := c.history.GetSkippedUnknownPopulated(ctx, user.ID)
+	if err != nil {
+		return err
+	}
+
+	for _, h := range histories {
+		previous, err := c.history.GetPreviousPopulated(ctx, user.ID, h.PlayedAt)
+		if err != nil {
+			return err
+		}
+		if previous == nil {
+			continue
+		}
+		if previous.Track.DurationMs == 0 {
+			continue
+		}
+
+		previousEnd := previous.PlayedAt.Add(time.Duration(previous.Track.DurationMs) * time.Millisecond)
+		// Did the next song start before the previous ended?
+		// Add a buffer of 20 seconds because skips in the last 20 seconds
+		// of the track don't really count
+		skipped := false
+		if previousEnd.Add(-20 * time.Second).After(h.PlayedAt) {
+			// User skipped
+			skipped = true
+		}
+
+		previous.Skipped = &skipped
+		if err := c.history.Update(ctx, *previous); err != nil {
+			return err
+		}
 	}
 
 	return nil

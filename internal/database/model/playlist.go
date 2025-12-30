@@ -12,9 +12,9 @@ type Playlist struct {
 	OwnerID       int
 	Name          string
 	Description   string
-	Public        bool
+	Public        *bool
 	TrackAmount   int
-	Collaborative bool
+	Collaborative *bool
 	CoverID       string
 	CoverURL      string
 	SnapshotID    string

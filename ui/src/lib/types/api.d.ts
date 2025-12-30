@@ -15,9 +15,9 @@ export namespace API {
     owner?: User;
     name: string;
     description?: string;
-    public: boolean;
+    public?: boolean;
     track_amount: number;
-    collaborative: boolean;
+    collaborative?: boolean;
     has_cover: boolean;
   }
 

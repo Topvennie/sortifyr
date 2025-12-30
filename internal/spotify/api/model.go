@@ -103,11 +103,11 @@ type Playlist struct {
 	} `json:"owner"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
-	Public      bool   `json:"public"`
+	Public      *bool  `json:"public"`
 	Tracks      struct {
 		Total int `json:"total"`
 	} `json:"tracks"`
-	Collaborative bool    `json:"collaborative"`
+	Collaborative *bool   `json:"collaborative"`
 	Images        []Image `json:"images"`
 	SnapshotID    string  `json:"snapshot_id"`
 }
