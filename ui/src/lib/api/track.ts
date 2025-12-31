@@ -15,6 +15,9 @@ export const useTrackGetHistory = (filter?: TrackHistoryFilter) => {
         limit: PAGE_LIMIT.toString(),
       })
 
+      if (filter?.skipped !== undefined) {
+        queryParams.append("skipped", String(filter?.skipped))
+      }
       if (filter?.start !== undefined) {
         queryParams.append("start", filter.start.toISOString())
       }

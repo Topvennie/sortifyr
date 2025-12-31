@@ -18,6 +18,7 @@ export const convertTrack = (t: API.Track): Track => {
 export interface TrackHistory extends Track {
   historyId: number;
   playedAt: Date;
+  playCount?: number;
 }
 
 export const convertTrackHistory = (h: API.TrackHistory): TrackHistory => {
@@ -25,6 +26,7 @@ export const convertTrackHistory = (h: API.TrackHistory): TrackHistory => {
     ...convertTrack(h),
     historyId: h.history_id,
     playedAt: new Date(h.played_at),
+    playCount: h.play_count,
   }
 }
 
@@ -82,6 +84,7 @@ export interface TrackFilter {
 }
 
 export interface TrackHistoryFilter {
+  skipped?: boolean;
   start?: Date;
   end?: Date;
 }

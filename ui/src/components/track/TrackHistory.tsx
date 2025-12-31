@@ -6,6 +6,8 @@ import { useState } from "react";
 import { SectionTitle } from "../atoms/Page";
 import { DatePickerInput } from "../molecules/DatePickerInput";
 import { Table } from "../molecules/Table";
+import { Group } from "@mantine/core";
+import { Segment } from "../molecules/Segment";
 
 export const TrackHistory = () => {
   const [range, setRange] = useState<[Date | null, Date | null]>([null, null])
@@ -24,6 +26,14 @@ export const TrackHistory = () => {
     }
   }
 
+  const handleSkippedChange = (value: string) => {
+    let skipped: boolean | undefined = undefined
+
+    if (value != "all") skipped = value === "true"
+
+    setFilter({ ...filter, skipped })
+  }
+
   const { history, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } = useTrackGetHistory(filter)
 
   const handleBottom = () => {
@@ -39,18 +49,31 @@ export const TrackHistory = () => {
         title="Recently Played"
         description={`An overview of recently played tracks.\nRun the tracks task if a track has no title.`}
       />
-      <DatePickerInput
-        type="range"
-        allowSingleDateInRange
-        placeholder="Filter by date range"
-        value={range}
-        onChange={handleRangeChange}
-      />
+      <Group gap="xs">
+        <DatePickerInput
+          type="range"
+          allowSingleDateInRange
+          placeholder="Filter by date range"
+          value={range}
+          onChange={handleRangeChange}
+        />
+        <Segment
+          data={[
+            { value: "all", label: "All" },
+            { value: "true", label: "Skipped" },
+            { value: "false", label: "Non-skipped" },
+          ]}
+          value={filter.skipped !== undefined ? String(filter.skipped) : "all"}
+          onChange={handleSkippedChange}
+          secondary
+        />
+      </Group>
       <Table
         idAccessor="historyId"
         columns={[
           { accessor: "name", title: "Track", width: "80%", ellipsis: true },
-          { accessor: "playedAt", render: ({ playedAt }) => <p className="text-muted">{formatDate(playedAt)}</p> }
+          { accessor: "playCount" },
+          { accessor: "playedAt", render: ({ playedAt }) => <p className="text-muted">{formatDate(playedAt)}</p> },
         ]}
         records={history}
         noRecordsText="No recorded tracks yet"

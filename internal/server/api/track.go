@@ -1,6 +1,7 @@
 package api
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -37,6 +38,13 @@ func (r *Track) getHistory(c *fiber.Ctx) error {
 		return fiber.ErrUnauthorized
 	}
 
+	var skipped *bool
+	if v := c.Query("skipped"); v != "" {
+		if b, err := strconv.ParseBool(v); err == nil {
+			skipped = &b
+		}
+	}
+
 	var err error
 
 	startRaw := c.Query("start")
@@ -64,11 +72,12 @@ func (r *Track) getHistory(c *fiber.Ctx) error {
 	}
 
 	history, err := r.track.GetHistory(c.Context(), dto.HistoryFilter{
-		UserID: userID,
-		Limit:  limit,
-		Offset: (page - 1) * limit,
-		Start:  start,
-		End:    end,
+		UserID:  userID,
+		Skipped: skipped,
+		Start:   start,
+		End:     end,
+		Limit:   limit,
+		Offset:  (page - 1) * limit,
 	})
 	if err != nil {
 		return err

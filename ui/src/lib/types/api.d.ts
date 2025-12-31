@@ -72,6 +72,7 @@ export namespace API {
   export interface TrackHistory extends Track {
     history_id: number;
     played_at: string;
+    play_count?: number;
   }
 
   export interface TrackAdded extends Track {

@@ -27,7 +27,13 @@ func (s *Service) NewTrack() *Track {
 }
 
 func (t *Track) GetHistory(ctx context.Context, filter dto.HistoryFilter) ([]dto.History, error) {
-	history, err := t.history.GetPopulatedFiltered(ctx, *filter.ToModel())
+	filterModel := filter.ToModel()
+	if filterModel.Skipped == nil {
+		tmp := false
+		filterModel.PlayCountSkipped = &tmp
+	}
+
+	history, err := t.history.GetPopulatedFiltered(ctx, *filterModel)
 	if err != nil {
 		zap.S().Error(err)
 		return nil, fiber.ErrInternalServerError

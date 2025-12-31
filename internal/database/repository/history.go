@@ -47,16 +47,23 @@ func (h *History) GetPopulatedFiltered(ctx context.Context, filter model.History
 		skipped = *filter.Skipped
 	}
 
+	playCountSkipped := false
+	if filter.PlayCountSkipped != nil {
+		playCountSkipped = *filter.PlayCountSkipped
+	}
+
 	history, err := h.repo.queries(ctx).HistoryGetPopulatedFiltered(ctx, sqlc.HistoryGetPopulatedFilteredParams{
-		Column1:       int32(filter.UserID),
-		Limit:         int32(filter.Limit),
-		Offset:        int32(filter.Offset),
-		Column4:       toTime(filter.Start),
-		FilterStart:   !filter.Start.IsZero(),
-		Column5:       toTime(filter.End),
-		FilterEnd:     !filter.End.IsZero(),
-		Column6:       skipped,
-		FilterSkipped: filter.Skipped != nil,
+		Column1:         int32(filter.UserID),
+		Limit:           int32(filter.Limit),
+		Offset:          int32(filter.Offset),
+		Column4:         toTime(filter.Start),
+		FilterStart:     !filter.Start.IsZero(),
+		Column5:         toTime(filter.End),
+		FilterEnd:       !filter.End.IsZero(),
+		Column6:         skipped,
+		FilterSkipped:   filter.Skipped != nil,
+		Column7:         playCountSkipped,
+		FilterPlayCount: filter.PlayCountSkipped != nil,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -68,13 +75,14 @@ func (h *History) GetPopulatedFiltered(ctx context.Context, filter model.History
 	return utils.SliceMap(history, func(h sqlc.HistoryGetPopulatedFilteredRow) *model.History {
 		history := model.HistoryModel(h.History)
 		history.Track = *model.TrackModel(h.Track)
+		history.PlayCount = int(h.PlayCount)
 
 		return history
 	}), nil
 }
 
 func (h *History) GetSkippedUnknownPopulated(ctx context.Context, userID int) ([]*model.History, error) {
-	skippeds, err := h.repo.queries(ctx).HistoryGetSkippedUnknownPopulated(ctx, int32(userID))
+	skippeds, err := h.repo.queries(ctx).HistoryGetSkippedNullPopulated(ctx, int32(userID))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -82,7 +90,7 @@ func (h *History) GetSkippedUnknownPopulated(ctx context.Context, userID int) ([
 		return nil, fmt.Errorf("get skipped unknown populated %d | %w", userID, err)
 	}
 
-	return utils.SliceMap(skippeds, func(s sqlc.HistoryGetSkippedUnknownPopulatedRow) *model.History {
+	return utils.SliceMap(skippeds, func(s sqlc.HistoryGetSkippedNullPopulatedRow) *model.History {
 		h := model.HistoryModel(s.History)
 		h.Track = *model.TrackModel(s.Track)
 

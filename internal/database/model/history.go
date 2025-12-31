@@ -18,7 +18,8 @@ type History struct {
 	ShowID     int
 
 	// Non db fields
-	Track Track
+	Track     Track
+	PlayCount int
 }
 
 func HistoryModel(h sqlc.History) *History {
@@ -36,10 +37,11 @@ func HistoryModel(h sqlc.History) *History {
 }
 
 type HistoryFilter struct {
-	UserID  int
-	Limit   int
-	Offset  int
-	Start   time.Time
-	End     time.Time
-	Skipped *bool
+	UserID           int
+	Limit            int
+	Offset           int
+	Start            time.Time
+	End              time.Time
+	Skipped          *bool
+	PlayCountSkipped *bool
 }

@@ -84,6 +84,7 @@ type History struct {
 
 	HistoryID int       `json:"history_id"`
 	PlayedAt  time.Time `json:"played_at"`
+	PlayCount int       `json:"play_count,omitzero"`
 }
 
 func HistoryDTO(t *model.Track, h *model.History) History {
@@ -91,23 +92,26 @@ func HistoryDTO(t *model.Track, h *model.History) History {
 		Track:     TrackDTO(t),
 		HistoryID: h.ID,
 		PlayedAt:  h.PlayedAt,
+		PlayCount: h.PlayCount,
 	}
 }
 
 type HistoryFilter struct {
-	UserID int
-	Limit  int
-	Offset int
-	Start  time.Time
-	End    time.Time
+	UserID  int
+	Skipped *bool
+	Start   time.Time
+	End     time.Time
+	Limit   int
+	Offset  int
 }
 
 func (h HistoryFilter) ToModel() *model.HistoryFilter {
 	return &model.HistoryFilter{
-		UserID: h.UserID,
-		Limit:  h.Limit,
-		Offset: h.Offset,
-		Start:  h.Start,
-		End:    h.End,
+		UserID:  h.UserID,
+		Skipped: h.Skipped,
+		Start:   h.Start,
+		End:     h.End,
+		Limit:   h.Limit,
+		Offset:  h.Offset,
 	}
 }
