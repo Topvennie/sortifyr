@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/topvennie/sortifyr/internal/database/repository"
+	"github.com/topvennie/sortifyr/internal/generator"
 	"github.com/topvennie/sortifyr/internal/server"
 	"github.com/topvennie/sortifyr/internal/server/service"
 	"github.com/topvennie/sortifyr/internal/spotify"
@@ -51,6 +52,8 @@ func main() {
 	if err := spotify.Init(*repo); err != nil {
 		zap.S().Fatalf("Failed to init the spotify package %v", err)
 	}
+
+	generator.Init(*repo)
 
 	api := server.New(*service, db.Pool())
 

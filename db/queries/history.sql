@@ -6,7 +6,7 @@ WHERE h.played_at < $1 AND h.user_id = $2
 ORDER BY h.played_at DESC
 LIMIT 1;
 
--- name: HistoryGetPopulatedFiltered :many
+-- name: HistoryGetPopulatedFilteredPaginated :many
 SELECT sqlc.embed(h), sqlc.embed(t), count(*) FILTER (WHERE h.user_id = $1::int AND (h.skipped = $7::boolean OR NOT @filter_play_count)) OVER  (PARTITION BY h.track_id) AS play_count
 FROM history h
 LEFT JOIN tracks t ON t.id = h.track_id
@@ -17,6 +17,17 @@ WHERE
   (h.skipped = $6::boolean OR NOT @filter_skipped)
 ORDER BY h.played_at DESC
 LIMIT $2 OFFSET $3;
+
+-- name: HistoryGetPopulatedFiltered :many
+SELECT sqlc.embed(h), sqlc.embed(t)
+FROM history h
+LEFT JOIN tracks t ON t.id = h.track_id
+WHERE 
+  h.user_id = $1::int AND
+  (h.played_at >= $2::timestamptz OR NOT @filter_start) AND 
+  (h.played_at <= $3::timestamptz OR NOT @filter_end) AND
+  (h.skipped = $4::boolean OR NOT @filter_skipped)
+ORDER BY h.played_at DESC;
 
 -- name: HistoryGetSkippedNullPopulated :many
 SELECT sqlc.embed(h), sqlc.embed(t)

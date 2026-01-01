@@ -33,7 +33,7 @@ func (t *Track) GetHistory(ctx context.Context, filter dto.HistoryFilter) ([]dto
 		filterModel.PlayCountSkipped = &tmp
 	}
 
-	history, err := t.history.GetPopulatedFiltered(ctx, *filterModel)
+	history, err := t.history.GetPopulatedFilteredPaginated(ctx, *filterModel)
 	if err != nil {
 		zap.S().Error(err)
 		return nil, fiber.ErrInternalServerError

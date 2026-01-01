@@ -68,6 +68,7 @@ func New(service service.Service, pool *pgxpool.Pool) *Server {
 	routers.NewLink(protectedAPI, service)
 	routers.NewTask(protectedAPI, service)
 	routers.NewTrack(protectedAPI, service)
+	routers.NewGenerator(protectedAPI, service)
 	routers.NewSetting(protectedAPI, service)
 
 	// Static files if served in production

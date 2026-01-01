@@ -2,6 +2,7 @@ package model
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/topvennie/sortifyr/pkg/sqlc"
 )
@@ -15,7 +16,20 @@ const (
 	PresetOldTop    GeneratorPreset = "old_top"
 )
 
-type GeneratorParameters struct{}
+type GeneratorWindow struct {
+	Start         time.Time
+	End           time.Time
+	MinPlays      int
+	BurstInterval time.Duration
+}
+
+type GeneratorParameters struct {
+	UserID       int
+	TrackAmount  int
+	MinPlayCount int
+	PeakWindow   GeneratorWindow
+	RecentWindow GeneratorWindow
+}
 
 type Generator struct {
 	ID         int
