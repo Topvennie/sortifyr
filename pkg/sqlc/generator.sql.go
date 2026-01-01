@@ -7,23 +7,67 @@ package sqlc
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const generatorCreate = `-- name: GeneratorCreate :one
-INSERT INTO generators (name, preset, parameters)
-VALUES ($1, $2, $3)
+INSERT INTO generators (user_id, name, description, playlist_id, maintained, parameters)
+VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING id
 `
 
 type GeneratorCreateParams struct {
-	Name       string
-	Preset     GeneratorPreset
-	Parameters []byte
+	UserID      int32
+	Name        string
+	Description pgtype.Text
+	PlaylistID  pgtype.Int4
+	Maintained  bool
+	Parameters  []byte
 }
 
 func (q *Queries) GeneratorCreate(ctx context.Context, arg GeneratorCreateParams) (int32, error) {
-	row := q.db.QueryRow(ctx, generatorCreate, arg.Name, arg.Preset, arg.Parameters)
+	row := q.db.QueryRow(ctx, generatorCreate,
+		arg.UserID,
+		arg.Name,
+		arg.Description,
+		arg.PlaylistID,
+		arg.Maintained,
+		arg.Parameters,
+	)
 	var id int32
 	err := row.Scan(&id)
 	return id, err
+}
+
+const generatorUpdate = `-- name: GeneratorUpdate :exec
+UPDATE generators
+SET 
+  name = coalesce($2, name),
+  description = coalesce($3, description),
+  playlist_id = coalesce($4, playlist_id),
+  maintained = coalesce($5, maintained),
+  parameters = coalesce($6, parameters)
+WHERE id = $1
+`
+
+type GeneratorUpdateParams struct {
+	ID          int32
+	Name        pgtype.Text
+	Description pgtype.Text
+	PlaylistID  pgtype.Int4
+	Maintained  pgtype.Bool
+	Parameters  []byte
+}
+
+func (q *Queries) GeneratorUpdate(ctx context.Context, arg GeneratorUpdateParams) error {
+	_, err := q.db.Exec(ctx, generatorUpdate,
+		arg.ID,
+		arg.Name,
+		arg.Description,
+		arg.PlaylistID,
+		arg.Maintained,
+		arg.Parameters,
+	)
+	return err
 }

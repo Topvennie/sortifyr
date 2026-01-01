@@ -17,11 +17,12 @@ func (s *Service) NewGenerator() *Generator {
 	return &Generator{}
 }
 
-func (g *Generator) Generate(ctx context.Context, userID int, gen dto.Generator) ([]dto.Track, error) {
-	params := gen.Params.ToModel()
-	params.UserID = userID
-
-	tracks, err := generator.G.Generate(ctx, gen.Preset, params)
+func (g *Generator) Preview(ctx context.Context, userID int, params dto.GeneratorParams) ([]dto.Track, error) {
+	gen := model.Generator{
+		UserID: userID,
+		Params: params.ToModel(),
+	}
+	tracks, err := generator.G.Generate(ctx, gen)
 	if err != nil {
 		zap.S().Error(err)
 		return nil, fiber.ErrInternalServerError

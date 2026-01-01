@@ -24,20 +24,22 @@ func Init(repo repository.Repository) {
 	}
 }
 
-func (g *generator) Generate(ctx context.Context, preset model.GeneratorPreset, params model.GeneratorParameters) ([]model.Track, error) {
+func (g *generator) Generate(ctx context.Context, gen model.Generator) ([]model.Track, error) {
 	var tracks []model.Track
 	var err error
 
-	switch preset {
-	case model.PresetForgotten:
-		tracks, err = g.forgotten(params)
-	case model.PresetTop:
-		tracks, err = g.top(ctx, params)
-	case model.PresetOldTop:
-		tracks, err = g.oldTop(ctx, params)
+	normalize(&gen.Params)
+
+	switch gen.Params.Preset {
+	case model.GeneratorPresetForgotten:
+		tracks, err = g.forgotten(gen)
+	case model.GeneratorPresetTop:
+		tracks, err = g.top(ctx, gen)
+	case model.GeneratorPresetOldTop:
+		tracks, err = g.oldTop(ctx, gen)
 
 	default:
-		tracks, err = g.custom(params)
+		tracks, err = g.custom(gen)
 	}
 
 	if err != nil {
@@ -52,47 +54,55 @@ type trackPlayCount struct {
 	playCount int
 }
 
-func (g *generator) custom(params model.GeneratorParameters) ([]model.Track, error) {
+func (g *generator) custom(gen model.Generator) ([]model.Track, error) {
 	return nil, nil
 }
 
-func (g *generator) forgotten(params model.GeneratorParameters) ([]model.Track, error) {
+func (g *generator) forgotten(gen model.Generator) ([]model.Track, error) {
 	return nil, nil
 }
 
-func (g *generator) top(ctx context.Context, params model.GeneratorParameters) ([]model.Track, error) {
-	// Set default param values
-	if params.TrackAmount == 0 {
-		params.TrackAmount = 50
-	}
-	if params.MinPlayCount == 0 {
-		params.MinPlayCount = 5
-	}
+func (g *generator) top(ctx context.Context, gen model.Generator) ([]model.Track, error) {
+	params := gen.Params.ParamsTop
 
 	// Get history for last 14 days
 	skipped := false
 	history, err := g.history.GetPopulatedFiltered(ctx, model.HistoryFilter{
-		UserID:  params.UserID,
-		Start:   time.Now().Add(-14 * 24 * time.Hour),
+		UserID:  gen.UserID,
+		Start:   params.Window.Start,
 		Skipped: &skipped,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	trackMap := make(map[int]trackPlayCount)
+	playedAts := make(map[int][]time.Time)
 	for _, h := range history {
-		track, ok := trackMap[h.TrackID]
+		playedAt, ok := playedAts[h.TrackID]
 		if !ok {
-			track = trackPlayCount{track: h.Track, playCount: 0}
+			playedAt = []time.Time{}
 		}
-		track.playCount++
-		trackMap[h.TrackID] = track
+		playedAt = append(playedAt, h.PlayedAt)
+		playedAts[h.TrackID] = playedAt
 	}
 
-	tracks := utils.MapValues(trackMap)
+	tracks := make([]trackPlayCount, 0)
+	seen := make(map[int]bool)
+	for _, h := range history {
+		if ok := seen[h.TrackID]; ok {
+			continue
+		}
 
-	tracks = utils.SliceFilter(tracks, func(t trackPlayCount) bool { return t.playCount > params.MinPlayCount })
+		seen[h.TrackID] = true
+
+		if hasBurst(playedAts[h.TrackID], params.Window) {
+			tracks = append(tracks, trackPlayCount{
+				track:     h.Track,
+				playCount: len(playedAts[h.TrackID]),
+			})
+		}
+	}
+
 	slices.SortFunc(tracks, func(a, b trackPlayCount) int {
 		if b.playCount == a.playCount {
 			return strings.Compare(a.track.Name, b.track.Name)
@@ -100,34 +110,19 @@ func (g *generator) top(ctx context.Context, params model.GeneratorParameters) (
 
 		return b.playCount - a.playCount
 	})
-	tracks = tracks[:min(params.TrackAmount, len(tracks))]
+	tracks = tracks[:min(gen.Params.TrackAmount, len(tracks))]
 	slices.SortFunc(tracks, func(a, b trackPlayCount) int { return strings.Compare(a.track.Name, b.track.Name) })
 
 	return utils.SliceMap(tracks, func(t trackPlayCount) model.Track { return t.track }), nil
 }
 
-func (g *generator) oldTop(ctx context.Context, params model.GeneratorParameters) ([]model.Track, error) {
-	// Set default param values
-	// This function assumes that the peak and recent windows fields are either fully populated or not at all
-	now := time.Now()
-	if params.PeakWindow.Start.IsZero() {
-		params.PeakWindow.Start = now.Add(-1 * 24 * 365 * time.Hour) // 365 days ago
-		params.PeakWindow.End = now.Add(-1 * 24 * 100 * time.Hour)   // 100 days ago
-		params.PeakWindow.MinPlays = 5
-		params.PeakWindow.BurstInterval = 24 * 14 * time.Hour // 14 days
-	}
-	if params.RecentWindow.Start.IsZero() {
-		params.RecentWindow.Start = now.Add(-1 * 24 * 14 * time.Hour) // 14 days ago
-		params.RecentWindow.End = now                                 // now
-		params.RecentWindow.MinPlays = 2
-		params.RecentWindow.BurstInterval = 24 * 14 * time.Hour // 14 days
-	}
-
+func (g *generator) oldTop(ctx context.Context, gen model.Generator) ([]model.Track, error) {
+	params := gen.Params.ParamsOldTop
 	skipped := false
 
 	// Get the relevant recent history
 	recent, err := g.history.GetPopulatedFiltered(ctx, model.HistoryFilter{
-		UserID:  params.UserID,
+		UserID:  gen.UserID,
 		Start:   params.RecentWindow.Start,
 		End:     params.RecentWindow.End,
 		Skipped: &skipped,
@@ -137,18 +132,18 @@ func (g *generator) oldTop(ctx context.Context, params model.GeneratorParameters
 	}
 
 	// Get all play times for each track
-	recentPlayedAt := make(map[int][]time.Time)
+	recentPlayedAts := make(map[int][]time.Time)
 	for _, r := range recent {
-		playedAt, ok := recentPlayedAt[r.TrackID]
+		playedAt, ok := recentPlayedAts[r.TrackID]
 		if !ok {
 			playedAt = []time.Time{}
 		}
-		recentPlayedAt[r.TrackID] = append(playedAt, r.PlayedAt)
+		recentPlayedAts[r.TrackID] = append(playedAt, r.PlayedAt)
 	}
 
 	// Get all relevant peak history
 	old, err := g.history.GetPopulatedFiltered(ctx, model.HistoryFilter{
-		UserID:  params.UserID,
+		UserID:  gen.UserID,
 		Start:   params.PeakWindow.Start,
 		End:     params.PeakWindow.End,
 		Skipped: &skipped,
@@ -157,43 +152,41 @@ func (g *generator) oldTop(ctx context.Context, params model.GeneratorParameters
 		return nil, err
 	}
 
-	// Get a map from track id to track
-	oldMap := make(map[int]model.Track)
-	for _, o := range old {
-		if _, ok := oldMap[o.TrackID]; !ok {
-			oldMap[o.TrackID] = o.Track
-		}
-	}
-
 	// Get all play times for each track
-	oldPlayedAt := make(map[int][]time.Time)
+	oldPlayedAts := make(map[int][]time.Time)
 	for _, o := range old {
-		playedAt, ok := oldPlayedAt[o.TrackID]
+		playedAt, ok := oldPlayedAts[o.TrackID]
 		if !ok {
 			playedAt = []time.Time{}
 		}
-		oldPlayedAt[o.TrackID] = append(playedAt, o.PlayedAt)
+		oldPlayedAts[o.TrackID] = append(playedAt, o.PlayedAt)
 	}
 
-	trackMap := make(map[int]trackPlayCount)
-	for k, v := range oldPlayedAt {
+	tracks := make([]trackPlayCount, 0)
+	seen := make(map[int]bool)
+	for _, o := range old {
+		if ok := seen[o.TrackID]; ok {
+			continue
+		}
+
+		seen[o.TrackID] = true
+
 		// Did we play it too much recently?
-		if hasBurst(recentPlayedAt[k], params.RecentWindow.MinPlays, params.RecentWindow.BurstInterval) {
+		if hasBurst(recentPlayedAts[o.TrackID], params.RecentWindow) {
 			continue
 		}
 
 		// Did we play it enough times in the past?
-		if !hasBurst(v, params.PeakWindow.MinPlays, params.PeakWindow.BurstInterval) {
+		if !hasBurst(oldPlayedAts[o.TrackID], params.PeakWindow) {
 			continue
 		}
 
-		trackMap[k] = trackPlayCount{
-			track:     oldMap[k],
-			playCount: len(oldPlayedAt[k]),
-		}
+		tracks = append(tracks, trackPlayCount{
+			track:     o.Track,
+			playCount: len(oldPlayedAts[o.TrackID]),
+		})
 	}
 
-	tracks := utils.MapValues(trackMap)
 	slices.SortFunc(tracks, func(a, b trackPlayCount) int {
 		if b.playCount == a.playCount {
 			return strings.Compare(a.track.Name, b.track.Name)
@@ -201,7 +194,7 @@ func (g *generator) oldTop(ctx context.Context, params model.GeneratorParameters
 
 		return b.playCount - a.playCount
 	})
-	tracks = tracks[:min(params.TrackAmount, len(tracks))]
+	tracks = tracks[:min(gen.Params.TrackAmount, len(tracks))]
 	slices.SortFunc(tracks, func(a, b trackPlayCount) int { return strings.Compare(a.track.Name, b.track.Name) })
 
 	return utils.SliceMap(tracks, func(t trackPlayCount) model.Track { return t.track }), nil

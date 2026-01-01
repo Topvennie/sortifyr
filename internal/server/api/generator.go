@@ -24,24 +24,24 @@ func NewGenerator(router fiber.Router, service service.Service) *Generator {
 }
 
 func (g *Generator) createRoutes() {
-	g.router.Post("/generate", g.generate)
+	g.router.Post("/preview", g.preview)
 }
 
-func (g *Generator) generate(c *fiber.Ctx) error {
+func (g *Generator) preview(c *fiber.Ctx) error {
 	userID, ok := c.Locals("userID").(int)
 	if !ok {
 		return fiber.ErrUnauthorized
 	}
 
-	var generator dto.Generator
-	if err := c.BodyParser(&generator); err != nil {
+	var generatorParams dto.GeneratorParams
+	if err := c.BodyParser(&generatorParams); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
-	if err := dto.Validate.Struct(generator); err != nil {
+	if err := dto.Validate.Struct(generatorParams); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	tracks, err := g.generator.Generate(c.Context(), userID, generator)
+	tracks, err := g.generator.Preview(c.Context(), userID, generatorParams)
 	if err != nil {
 		return err
 	}

@@ -1,11 +1,12 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TYPE generator_preset AS ENUM ('custom', 'forgotten', 'top', 'old_top');
-
 CREATE TABLE generators (
   id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
   name TEXT NOT NULL,
-  preset GENERATOR_PRESET NOT NULL,
+  description TEXT,
+  playlist_id INTEGER REFERENCES playlists (id),
+  maintained BOOL NOT NULL,
   parameters JSONB
 );
 -- +goose StatementEnd
@@ -13,6 +14,4 @@ CREATE TABLE generators (
 -- +goose Down
 -- +goose StatementBegin
 DROP TABLE generators;
-
-DROP TYPE generator_preset;
 -- +goose StatementEnd
