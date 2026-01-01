@@ -1,6 +1,6 @@
 import { usePlaylistGetDuplicates, usePlaylistRemoveDuplicates } from "@/lib/api/playlist"
 import { Playlist } from "@/lib/types/playlist"
-import { Button, Group } from "@mantine/core"
+import { Group } from "@mantine/core"
 import { useDisclosure } from "@mantine/hooks"
 import { notifications } from "@mantine/notifications"
 import { sortBy } from "lodash"
@@ -11,6 +11,7 @@ import { Confirm } from "../molecules/Confirm"
 import { Table } from "../molecules/Table"
 import { PlaylistCover } from "./PlaylistCover"
 import { getErrorMessage } from "@/lib/utils"
+import { Button } from "../atoms/Button"
 
 export const PlaylistDuplicates = () => {
   const { data: playlists, isLoading } = usePlaylistGetDuplicates()
@@ -45,7 +46,7 @@ export const PlaylistDuplicates = () => {
           title="Playlist duplicates"
           description={`Playlists with duplicate tracks.\nClick on a row to see the duplicate tracks.`}
         />
-        <Button onClick={open} radius="lg" color="secondary.1" c="black">
+        <Button onClick={open} color="secondary.1">
           Remove duplicates
         </Button>
       </Group>

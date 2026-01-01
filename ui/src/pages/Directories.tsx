@@ -1,3 +1,4 @@
+import { Button } from "@/components/atoms/Button"
 import { Page, PageTitle, Section, SectionTitle } from "@/components/atoms/Page"
 import { DirectoryPlaylistDraggable, DirectoryPlaylistSelector } from "@/components/directory/DirectoryPlaylistSelector"
 import { DirectoryTree } from "@/components/directory/DirectoryTree"
@@ -10,7 +11,7 @@ import { Playlist, PlaylistSchema } from "@/lib/types/playlist"
 import { getUuid } from "@/lib/utils"
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core'
 import { restrictToWindowEdges } from '@dnd-kit/modifiers'
-import { Button, Group } from "@mantine/core"
+import { Group } from "@mantine/core"
 import { useDebouncedValue, useDisclosure } from "@mantine/hooks"
 import { notifications } from "@mantine/notifications"
 import { useEffect, useMemo, useState } from "react"
@@ -138,7 +139,7 @@ const DirectoriesInner = () => {
                   title="Directories"
                   description="Drag playlists here to group them."
                 />
-                <Button onClick={handleDirectoryCreate} color="secondary.1" radius="lg" leftSection={<LuPlus />} className="text-black">
+                <Button onClick={handleDirectoryCreate} color="secondary.1" leftSection={<LuPlus />}>
                   New root
                 </Button>
               </Group>
@@ -152,10 +153,10 @@ const DirectoriesInner = () => {
                 className="flex-1"
               />
               <Group justify="end">
-                <Button onClick={openReset} variant="default" radius="lg" className="text-muted">
+                <Button onClick={openReset} c="" variant="default" className="text-muted">
                   Reset
                 </Button>
-                <Button onClick={openSave} radius="lg">
+                <Button onClick={openSave}>
                   Save
                 </Button>
               </Group>

@@ -2,12 +2,13 @@ import { DirectorySchema } from "@/lib/types/directory";
 import { PlaylistSchema } from "@/lib/types/playlist";
 import { getUuid } from "@/lib/utils";
 import { useDroppable } from "@dnd-kit/core";
-import { ActionIcon, Button, Group, Stack, TextInput } from "@mantine/core";
+import { ActionIcon, Group, Stack, TextInput } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useState } from "react";
 import { LuFolder, LuFolderOpen, LuFolderPlus, LuPencilLine, LuTrash2, LuTriangle } from "react-icons/lu";
 import { ModalCenter } from "../atoms/ModalCenter";
 import { DirectoryTreePlaylistEditable } from "./DirectoryTreePlaylistEditable";
+import { Button } from "../atoms/Button";
 
 type Props = {
   directory: DirectorySchema;
@@ -119,10 +120,10 @@ export const DirectoryTreeNodeEditable = ({ directory, level, onUpdate, onDelete
             onChange={e => setName(e.target.value)}
           />
           <Group justify="end">
-            <Button onClick={close} radius="md" color="primary.6" variant="outline">
+            <Button onClick={close} color="primary.6" variant="outline">
               Cancel
             </Button>
-            <Button onClick={handleUpdate} radius="md" color="primary.6">
+            <Button onClick={handleUpdate} color="primary.6">
               Save
             </Button>
           </Group>

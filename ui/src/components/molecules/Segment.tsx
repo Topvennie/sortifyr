@@ -11,7 +11,7 @@ export const Segment = ({ secondary, ...props }: Props) => {
       color={secondary ? "secondary.1" : "primary.3"}
       styles={{
         innerLabel: {
-          color: secondary ? "black" : undefined,
+          color: "black",
         },
       }}
       {...props}

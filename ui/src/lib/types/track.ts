@@ -15,6 +15,10 @@ export const convertTrack = (t: API.Track): Track => {
   }
 }
 
+export const convertTracks = (t: API.Track[]): Track[] => {
+  return t.map(convertTrack)
+}
+
 export interface TrackHistory extends Track {
   historyId: number;
   playedAt: Date;

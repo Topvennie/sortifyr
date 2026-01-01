@@ -1,12 +1,13 @@
 import { Avatar } from "@/components/atoms/Avatar";
+import { Button } from "@/components/atoms/Button";
 import { LinkButton } from "@/components/atoms/LinkButton";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { cn, getBuildTime } from "@/lib/utils";
-import { ActionIcon, AppShell, Burger, Button, Divider, Group, ScrollArea, Stack } from "@mantine/core";
+import { ActionIcon, AppShell, Burger, Divider, Group, ScrollArea, Stack } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { LinkProps } from "@tanstack/react-router";
 import { ComponentProps, ReactNode, useState } from "react";
-import { LuClock, LuFolderTree, LuLink2, LuListMusic, LuMusic, LuMusic3, LuSettings, LuTriangle } from "react-icons/lu";
+import { LuClock, LuFolderTree, LuLink2, LuListMusic, LuMusic, LuMusic3, LuSettings, LuSlidersHorizontal, LuTriangle } from "react-icons/lu";
 
 type Props = ComponentProps<"div">
 
@@ -41,6 +42,11 @@ const routes: Route[] = [
     title: "Background Tasks",
     icon: <LuClock className="size-5" />,
     link: { to: "/task" },
+  },
+  {
+    title: "Generator",
+    icon: <LuSlidersHorizontal className="size-5" />,
+    link: { to: "/generator" },
   },
   {
     title: "Settings",
@@ -113,7 +119,7 @@ export const NavLayout = ({ className, children, ...props }: Props) => {
             {userExpanded && (
               <>
                 <Divider mt="sm" />
-                <Button onClick={logout} radius="md" variant="subtle" pl={0} justify="start" className="text-muted">
+                <Button onClick={logout} c="" variant="subtle" pl={0} justify="start" className="text-muted">
                   Log out
                 </Button>
                 <Divider />

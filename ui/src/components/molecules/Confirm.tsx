@@ -1,5 +1,6 @@
-import { Button, Text, Group, ModalBaseProps, Stack } from "@mantine/core";
+import { Text, Group, ModalBaseProps, Stack } from "@mantine/core";
 import { ModalCenter } from "../atoms/ModalCenter";
+import { Button } from "../atoms/Button";
 
 interface Props extends Omit<ModalBaseProps, 'title'> {
   modalTitle: string;

@@ -1,8 +1,9 @@
+import { Button } from "@/components/atoms/Button"
 import { Page, PageTitle, Section, SectionTitle } from "@/components/atoms/Page"
 import { useSettingUploadExport } from "@/lib/api/setting"
 import { CONTENT_TYPE } from "@/lib/types/contentType"
 import { getErrorMessage } from "@/lib/utils"
-import { Button, FileButton, Group, Pill, Stack } from "@mantine/core"
+import { FileButton, Group, Pill, Stack } from "@mantine/core"
 import { notifications } from "@mantine/notifications"
 import { LuCloudUpload } from "react-icons/lu"
 
@@ -44,11 +45,11 @@ export const Settings = () => {
             <p>3. When Spotify emails your the download link, save the .zip file to your computer.</p>
             <p>4. Click the button below and choose the .zip file to start the import.</p>
           </Stack>
-          <p className="text-red-500">This will clear all historic data before the most recent song in the zip file.</p>
+          <p className="font-semibold text-red-500">This will clear all historic data before the most recent song in the zip file.</p>
           <FileButton onChange={handleExport} accept={CONTENT_TYPE.ZIP}>
             {(props) => (
               <div>
-                <Button leftSection={<LuCloudUpload />} radius="lg" {...props}>Upload Spotify data</Button>
+                <Button leftSection={<LuCloudUpload />} {...props}>Upload Spotify data</Button>
               </div>
             )}
           </FileButton>

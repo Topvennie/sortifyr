@@ -1,3 +1,4 @@
+import { Button } from "@/components/atoms/Button"
 import { Page, PageTitle, Section, SectionTitle } from "@/components/atoms/Page"
 import { LinkConnections } from "@/components/link/LinkConnections"
 import { LinkTree } from "@/components/link/LinkTree"
@@ -8,7 +9,7 @@ import { useLinkAnchor } from "@/lib/hooks/useLinkAnchor"
 import { LinkAnchorProvider } from "@/lib/providers/LinkAnchorProvider"
 import { Directory } from "@/lib/types/directory"
 import { Playlist } from "@/lib/types/playlist"
-import { Badge, Button, Group, Stack } from "@mantine/core"
+import { Badge, Group, Stack } from "@mantine/core"
 import { useDisclosure, useMediaQuery } from "@mantine/hooks"
 import { useMemo } from "react"
 
@@ -108,10 +109,10 @@ const LinksInner = () => {
           </div>
 
           <Group justify="end">
-            <Button onClick={openReset} variant="default" radius="lg" className="text-muted">
+            <Button onClick={openReset} c="" variant="default" className="text-muted">
               Reset changes
             </Button>
-            <Button onClick={openSave} radius="lg">
+            <Button onClick={openSave}>
               Apply changes
             </Button>
           </Group>

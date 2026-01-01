@@ -10,6 +10,10 @@ import { Links } from "./pages/Links";
 import { Tasks } from "./pages/Tasks";
 import { Tracks } from "./pages/Tracks";
 import { Settings } from "./pages/Settings";
+import { GeneratorOverview } from "./pages/generator/GeneratorOverview";
+import { Generator } from "./pages/generator/Generator";
+import { GeneratorCreate } from "./pages/generator/GeneratorCreate";
+import { GeneratorEdit } from "./pages/generator/GeneratorEdit";
 
 const root = createRootRouteWithContext()({
   component: App,
@@ -63,6 +67,34 @@ const setting = createRoute({
   component: Settings,
 })
 
+//
+// Generator
+//
+
+const generator = createRoute({
+  getParentRoute: () => index,
+  path: "/generator",
+  component: Generator,
+})
+
+const generatorOverview = createRoute({
+  getParentRoute: () => generator,
+  path: "/",
+  component: GeneratorOverview,
+})
+
+const generatorCreate = createRoute({
+  getParentRoute: () => generator,
+  path: "/create",
+  component: GeneratorCreate,
+})
+
+const generatorEdit = createRoute({
+  getParentRoute: () => generator,
+  path: "/edit/$generatorId",
+  component: GeneratorEdit,
+})
+
 const routeTree = root.addChildren([
   index.addChildren([
     home,
@@ -72,6 +104,7 @@ const routeTree = root.addChildren([
     task,
     history,
     setting,
+    generator.addChildren(([generatorOverview, generatorCreate, generatorEdit])),
   ]),
 ])
 
