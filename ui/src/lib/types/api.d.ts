@@ -88,4 +88,31 @@ export namespace API {
   export interface TrackDuplicate extends Track {
     amount: number;
   }
+
+  export interface GeneratorWindow {
+    start: string;
+    end: string;
+    min_plays: number;
+    burst_interval_s: number;
+  }
+
+  export interface Generator extends Base {
+    name: string;
+    description?: string;
+    params: {
+      track_amount: number;
+      excluded_playlist_ids?: number[];
+      excluded_track_ids?: number[];
+      preset: string;
+      params_custom?: {};
+      params_forgotten?: {};
+      params_top?: {
+        window: GeneratorWindow;
+      };
+      params_old_top?: {
+        peak_window: GeneratorWindow;
+        current_window: GeneratorWindow;
+      };
+    }
+  }
 }

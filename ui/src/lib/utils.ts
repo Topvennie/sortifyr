@@ -78,3 +78,18 @@ export async function getErrorMessage(err: Error) {
 
   return err.message
 }
+
+export function daysAgo(days: number) {
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+}
+
+export function getValueByPath<T>(obj: unknown, path: string): T | undefined {
+  return path
+    .split(".")
+    .reduce<unknown>((acc, key) => {
+      if (acc == null || typeof acc !== "object") {
+        return undefined;
+      }
+      return (acc as Record<string, unknown>)[key];
+    }, obj) as T | undefined;
+}

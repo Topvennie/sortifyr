@@ -1,15 +1,11 @@
-import { useGeneratorGenerate } from "@/lib/api/generator";
-import { GeneratorPreset, generatorPresetString, generatorSchema, GeneratorSchema } from "@/lib/types/generator";
-import { ActionIcon, Divider, Group, NumberInput, Stack, Stepper } from "@mantine/core";
-import { useForm, UseFormReturnType } from "@mantine/form";
-import { useQueryClient } from "@tanstack/react-query";
+import { GeneratorPreset, generatorSchema, GeneratorSchema } from "@/lib/types/generator";
+import { daysAgo } from "@/lib/utils";
+import { Divider, Group, Stepper } from "@mantine/core";
+import { useForm } from "@mantine/form";
 import { zod4Resolver } from "mantine-form-zod-resolver";
 import { useState } from "react";
-import { LuRotateCcw } from "react-icons/lu";
 import { Button } from "../atoms/Button";
-import { SectionTitle } from "../atoms/Page";
-import { Table } from "../molecules/Table";
-import { notifications } from "@mantine/notifications";
+import { GeneratorFormPreset } from "./GeneratorFormPreset";
 
 const maxSteps = 3
 
@@ -18,20 +14,47 @@ export const GeneratorForm = () => {
 
   const form = useForm<GeneratorSchema>({
     initialValues: {
-      preset: GeneratorPreset.Top,
+      name: "",
+      description: undefined,
       params: {
         trackAmount: 50,
-        minPlayCount: 5,
-      },
+        excludedPlaylistIds: undefined,
+        excludedTrackIds: undefined,
+        preset: GeneratorPreset.Top,
+        paramsCustom: {},
+        paramsForgotten: {},
+        paramsTop: {
+          window: {
+            start: daysAgo(14), // 14 days ago
+            end: new Date(),
+            minPlays: 5,
+            burstIntervalS: 14 * 24 * 60 * 60 // 14 days
+          },
+        },
+        paramsOldTop: {
+          peakWindow: {
+            start: daysAgo(365), // 365 days ago
+            end: daysAgo(100), // 100 days ago
+            minPlays: 5,
+            burstIntervalS: 14 * 24 * 60 * 60 // 14 days
+          },
+          recentWindow: {
+            start: daysAgo(14), // 14 days ago
+            end: new Date(),
+            minPlays: 5,
+            burstIntervalS: 14 * 24 * 60 * 60 // 14 days
+          }
+        }
+      }
     },
     validate: zod4Resolver(generatorSchema),
   })
 
   return (
     <div className="flex flex-col gap-4 h-full">
-      <Stepper active={active} onStepClick={setActive} allowNextStepsSelect={false} className="flex-1">
+      <Stepper active={active} onStepClick={setActive} allowNextStepsSelect={false} className="flex-1 overflow-y-auto">
         <Stepper.Step label="Preset & Parameters">
-          <Preset form={form} />
+          <GeneratorFormPreset form={form} />
         </Stepper.Step>
         <Stepper.Step label="Select tracks">
         </Stepper.Step>
@@ -50,65 +73,3 @@ export const GeneratorForm = () => {
   )
 }
 
-const Preset = ({ form }: { form: UseFormReturnType<GeneratorSchema> }) => {
-  const { data: tracks, isLoading, isRefetching } = useGeneratorGenerate(form.values)
-  const queryClient = useQueryClient()
-
-  const handleClickPreset = (p: GeneratorPreset) => {
-    form.setFieldValue("preset", p)
-  }
-
-  const handleRefetchTracks = () => {
-    if (form.validate().hasErrors) {
-      notifications.show({ color: "red", message: "Some parameters are invalid" })
-      return
-    }
-
-    queryClient.invalidateQueries({ queryKey: ["generator", "generate"] })
-  }
-
-  return (
-    <Stack gap="lg">
-      <SectionTitle
-        title="Preset & Parameters"
-        description="Pick a starting point, then fine tune the filters."
-      />
-
-      <Stack gap="xs">
-        <p className="text-muted">Choose a preset</p>
-        <Group>
-          {Object.values(GeneratorPreset).map(p => (
-            <Button key={String(p)} onClick={() => handleClickPreset(p)} color={form.values.preset === p ? "primary.3" : "gray"}>{generatorPresetString[p]}</Button>
-          ))}
-        </Group>
-      </Stack>
-
-      <Stack gap="xs">
-        <p className="text-muted">Configure parameters</p>
-        <Group>
-          <NumberInput label="Amount of Tracks" {...form.getInputProps("params.trackAmount")} />
-          <NumberInput label="Min Play Count" {...form.getInputProps("params.minPlayCount")} />
-        </Group>
-      </Stack>
-
-      <Stack gap="xs">
-        <Group gap="xs">
-          <p className="text-muted">Preview</p>
-          <ActionIcon onClick={handleRefetchTracks} variant="subtle" c="black" loading={isLoading || isRefetching}>
-            <LuRotateCcw />
-          </ActionIcon>
-        </Group>
-        <Table
-          columns={[
-            { accessor: "name" },
-          ]}
-          records={tracks ?? []}
-          height={512}
-          noRecordsText="No tracks fit the parameters"
-          fetching={isLoading || isRefetching}
-          noHeader
-        />
-      </Stack>
-    </Stack>
-  )
-}

@@ -5,10 +5,10 @@ import { convertTracks } from "../types/track"
 
 const ENDPOINT = "generator"
 
-export const useGeneratorGenerate = (generator: GeneratorSchema) => {
+export const useGeneratorPreview = (generator: GeneratorSchema) => {
   return useQuery({
-    queryKey: ["generator", "generate"],
-    queryFn: async () => (await apiPost(`${ENDPOINT}/generate`, generator, convertTracks)).data,
+    queryKey: ["generator", "preview"],
+    queryFn: async () => (await apiPost(`${ENDPOINT}/preview`, generator.params, convertTracks)).data,
     staleTime: Infinity,
     throwOnError: true,
   })
