@@ -20,7 +20,7 @@ func (c *client) trackUpdate(ctx context.Context, user model.User) error {
 
 	filtered := filterSpotify(filterSpotifyStruct[*model.Track]{
 		Items:     tracksDB,
-		Frequency: 24,
+		Frequency: 48,
 		SpotifyID: func(t *model.Track) string { return t.SpotifyID },
 		UpdatedAt: func(t *model.Track) time.Time { return t.UpdatedAt },
 	})
