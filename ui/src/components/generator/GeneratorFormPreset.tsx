@@ -1,24 +1,27 @@
 import { useGeneratorPreview } from "@/lib/api/generator"
+import { usePlaylistGetAll } from "@/lib/api/playlist"
 import { GeneratorPreset, generatorPresetString, GeneratorSchema, GeneratorWindowSchema } from "@/lib/types/generator"
 import { getValueByPath } from "@/lib/utils"
-import { ActionIcon, Alert, Group, NumberInput, Stack } from "@mantine/core"
+import { Alert, Group, NumberInput, Stack } from "@mantine/core"
 import { DatePickerInput, DatesRangeValue } from "@mantine/dates"
 import { UseFormReturnType } from "@mantine/form"
 import { notifications } from "@mantine/notifications"
-import { useQueryClient } from "@tanstack/react-query"
-import { ReactNode, useState } from "react"
-import { LuRotateCcw } from "react-icons/lu"
+import { ReactNode, useEffect, useState } from "react"
 import { Button } from "../atoms/Button"
-import { SectionTitle } from "../atoms/Page"
+import { Section, SectionTitle } from "../atoms/Page"
 import { Table } from "../molecules/Table"
+import { GeneratorPlaylistTree } from "./GeneratorPlaylistTree"
 
 type Props = {
   form: UseFormReturnType<GeneratorSchema>
+  nextStep: () => void;
+  prevStep: () => void;
 }
 
-export const GeneratorFormPreset = ({ form }: Props) => {
-  const { data: tracks, isLoading, isRefetching } = useGeneratorPreview(form.values)
-  const queryClient = useQueryClient()
+export const GeneratorFormPreset = ({ form, nextStep, prevStep }: Props) => {
+  const { mutate: generatorPreview, data: tracks, isPending } = useGeneratorPreview()
+
+  useEffect(() => generatorPreview(form.getValues()), [])
 
   const handleClickPreset = (p: GeneratorPreset) => {
     form.setFieldValue("params.preset", p)
@@ -27,11 +30,10 @@ export const GeneratorFormPreset = ({ form }: Props) => {
   const handleRefetchTracks = () => {
     if (form.validateField("params").hasError) {
       notifications.show({ color: "red", message: "Some parameters are invalid" })
-      console.error(form.errors)
       return
     }
 
-    queryClient.invalidateQueries({ queryKey: ["generator", "preview"] })
+    generatorPreview(form.getValues())
   }
 
   const getPresetArguments = (preset: GeneratorPreset) => {
@@ -47,51 +49,104 @@ export const GeneratorFormPreset = ({ form }: Props) => {
     }
   }
 
-  const [presetArguments, setPresetArguments] = useState<ReactNode>(getPresetArguments(form.values.params?.preset ?? GeneratorPreset.Custom))
+  const [presetArguments, setPresetArguments] = useState<ReactNode>(getPresetArguments(form.getValues().params?.preset ?? GeneratorPreset.Custom))
   form.watch("params.preset", ({ value }) => setPresetArguments(getPresetArguments(value as GeneratorPreset)))
 
+  // TODO: next give arwning if the preview is not the same as the generator
+
   return (
-    <Stack gap="lg">
-      <SectionTitle
-        title="Preset & Parameters"
-        description="Pick a starting point, then fine tune the filters."
-      />
+    <div className="flex-1 flex flex-col md:flex-row gap-4 md:overflow-hidden">
+      <Section className="flex-none md:w-[60%]">
+        <SectionTitle
+          title="Preset & Parameters"
+          description="Pick a starting point and then fine tune the filters."
+        />
 
-      <Stack gap="xs">
-        <p className="text-muted">Choose a preset</p>
-        <Group>
-          {Object.values(GeneratorPreset).map(p => (
-            <Button key={String(p)} onClick={() => handleClickPreset(p)} color={form.values.params?.preset === p ? "primary.3" : "gray"}>{generatorPresetString[p]}</Button>
-          ))}
-        </Group>
-        {presetArguments}
-      </Stack>
+        <Stack gap="xs">
+          <p className="text-muted">Preset</p>
+          <Group>
+            {Object.values(GeneratorPreset).map(p => (
+              <Button key={String(p)} onClick={() => handleClickPreset(p)} c={form.getValues().params?.preset === p ? "black" : "gray.6"} color={form.getValues().params?.preset === p ? "secondary.1" : "gray"}>{generatorPresetString[p]}</Button>
+            ))}
+          </Group>
+          {presetArguments}
+        </Stack>
 
-      <Stack gap="xs">
-        <p className="text-muted">General parameters</p>
-        <Group>
-          <NumberInput label="Maximum Tracks" allowNegative={false} {...form.getInputProps("params.trackAmount")} />
-        </Group>
-      </Stack>
+        <Stack gap="xs">
+          <p className="text-muted">General parameters</p>
+          <Group>
+            <NumberInput label="Maximum Tracks" allowNegative={false} {...form.getInputProps("params.trackAmount")} />
+          </Group>
+        </Stack>
 
-      <Stack gap="xs">
-        <Group gap="xs">
-          <p className="text-muted">Preview</p>
-          <ActionIcon onClick={handleRefetchTracks} variant="subtle" c="black" loading={isLoading || isRefetching}>
-            <LuRotateCcw />
-          </ActionIcon>
+        <Stack gap="xs">
+          <p className="text-muted">Select playlists</p>
+          <Playlists form={form} />
+        </Stack>
+      </Section>
+
+      <Section>
+        <Group justify="space-between">
+          <SectionTitle
+            title="Preview Tracks"
+            description="Adjust parameters and then refresh to update the preview."
+          />
+          <Button onClick={handleRefetchTracks} color="secondary.1" loading={isPending}>Refresh</Button>
         </Group>
+
         <Table
           columns={[
             { accessor: "name" },
           ]}
           records={tracks ?? []}
-          height={512}
           noRecordsText="No tracks fit the parameters"
-          fetching={isLoading || isRefetching}
-          noHeader
+          fetching={isPending}
         />
-      </Stack>
+        <Group justify="end">
+          <Button onClick={prevStep} color="gray">Cancel</Button>
+          <Button onClick={nextStep}>Next: Tracks</Button>
+        </Group>
+      </Section>
+    </div>
+  )
+}
+
+const Playlists = ({ form }: { form: UseFormReturnType<GeneratorSchema> }) => {
+  const { data: playlists, isLoading } = usePlaylistGetAll()
+  const [excluded, setExcluded] = useState<number[]>(form.getValues().params?.excludedPlaylistIds ?? [])
+
+  const handleToggle = (playlistIds: number[], isExcluded: boolean) => {
+    let newExcluded: number[]
+
+    if (isExcluded) newExcluded = [...excluded, ...playlistIds.filter(p => !excluded.includes(p))]
+    else newExcluded = excluded.filter(e => !playlistIds.includes(e))
+
+    form.setFieldValue("params.excludedPlaylistIds", newExcluded)
+    setExcluded(newExcluded)
+  }
+
+  const handleDeselectAll = () => {
+    const newExcluded = playlists?.map(p => p.id) ?? []
+
+    form.setFieldValue("params.excludedPlaylistIds", newExcluded)
+    setExcluded(newExcluded)
+  }
+
+  const handleSelectAll = () => {
+    const newExcluded: number[] = []
+
+    form.setFieldValue("params.excludedPlaylistIds", newExcluded)
+    setExcluded(newExcluded)
+  }
+
+  return (
+    <Stack>
+      <Group>
+        <Button onClick={handleDeselectAll} color="secondary.1">Deselect all</Button>
+        <Button onClick={handleSelectAll} color="secondary.1">Select all</Button>
+        <p className="text-muted ml-auto">{`Selected ${(playlists?.length ?? 0) - excluded.length}`}</p>
+      </Group>
+      <GeneratorPlaylistTree playlists={playlists ?? []} isLoading={isLoading} excluded={excluded} onToggle={handleToggle} />
     </Stack>
   )
 }
@@ -107,13 +162,12 @@ const Forgotten = ({ form }: { form: UseFormReturnType<GeneratorSchema> }) => {
 const Top = ({ form }: { form: UseFormReturnType<GeneratorSchema> }) => {
   return (
     <Stack>
-      <Alert radius="lg" title="Top" className="whitespace-pre-wrap">
+      <Alert radius="lg" className="whitespace-pre-wrap">
         {`Top finds the tracks you're listening to the most right now.
-
 It looks at your listening history within the selected time range and includes tracks that were played at least the minimum number of times within the given interval.`}
       </Alert>
       <Stack gap={0}>
-        <p className="font-semibold">Evaluation window</p>
+        <p className="text-muted">Evaluation window</p>
         <Window form={form} path="params.paramsTop.window" />
       </Stack>
     </Stack>
@@ -123,9 +177,8 @@ It looks at your listening history within the selected time range and includes t
 const OldTop = ({ form }: { form: UseFormReturnType<GeneratorSchema> }) => {
   return (
     <Stack>
-      <Alert radius="lg" title="Old Top" className="whitespace-pre-wrap">
+      <Alert radius="lg" className="whitespace-pre-wrap">
         {`Old Top finds tracks you used to listen to on repeat, but don’t play much anymore.
-
 It works in two steps:
 
 1. Historic window:
@@ -135,14 +188,14 @@ It works in two steps:
    Filters out tracks that were still played frequently in the recent range.
 
 Example:
-If the historic range is 6 months, the minimum plays is 5, and the burst interval is 14 days, it will find tracks you played 5 or more times within any 14-day period during those 6 months — but only if you haven’t played them much recently.`}
+If the historic range is 6 months, the minimum plays is 5, and the burst interval is 14 days, it will find tracks you played 5 or more times within any 14-day period during those 6 months. But only if you haven’t played them much recently.`}
       </Alert>
       <Stack gap={0}>
-        <p className="font-semibold">Historic listening window</p>
+        <p className="text-muted">Historic listening window</p>
         <Window form={form} path="params.paramsOldTop.peakWindow" />
       </Stack>
       <Stack gap={0}>
-        <p className="font-semibold">Recent listening window</p>
+        <p className="text-muted">Recent listening window</p>
         <Window form={form} path="params.paramsOldTop.recentWindow" />
       </Stack>
     </Stack>

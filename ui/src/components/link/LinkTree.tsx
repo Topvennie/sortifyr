@@ -18,7 +18,6 @@ type Props = {
 export const LinkTree = ({ roots, unAssigned, side, title, isLoading, className, ...props }: Props) => {
   const child = () => {
     if (isLoading) return <LoadingSpinner />
-    if (roots.length === 0) return null
 
     return (
       <>

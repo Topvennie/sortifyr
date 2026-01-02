@@ -42,3 +42,35 @@ func (q *Queries) PlaylistTrackDeleteByPlaylistTrack(ctx context.Context, arg Pl
 	_, err := q.db.Exec(ctx, playlistTrackDeleteByPlaylistTrack, arg.PlaylistID, arg.TrackID)
 	return err
 }
+
+const playlistTrackGetByPlaylistIds = `-- name: PlaylistTrackGetByPlaylistIds :many
+SELECT id, playlist_id, track_id, deleted_at, created_at
+FROM playlist_tracks
+WHERE playlist_id = ANY($1::int[])
+`
+
+func (q *Queries) PlaylistTrackGetByPlaylistIds(ctx context.Context, dollar_1 []int32) ([]PlaylistTrack, error) {
+	rows, err := q.db.Query(ctx, playlistTrackGetByPlaylistIds, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PlaylistTrack
+	for rows.Next() {
+		var i PlaylistTrack
+		if err := rows.Scan(
+			&i.ID,
+			&i.PlaylistID,
+			&i.TrackID,
+			&i.DeletedAt,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

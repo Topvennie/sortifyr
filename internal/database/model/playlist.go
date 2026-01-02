@@ -66,6 +66,16 @@ type PlaylistTrack struct {
 	DeletedAt  time.Time
 }
 
+func PlaylistTrackModel(p sqlc.PlaylistTrack) *PlaylistTrack {
+	return &PlaylistTrack{
+		ID:         int(p.ID),
+		PlaylistID: int(p.PlaylistID),
+		TrackID:    int(p.TrackID),
+		CreatedAt:  p.CreatedAt.Time,
+		DeletedAt:  p.DeletedAt.Time,
+	}
+}
+
 type PlaylistUser struct {
 	ID         int
 	UserID     int

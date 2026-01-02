@@ -35,13 +35,13 @@ const Playlist = ({ playlist }: PlaylistProps) => {
   return (
     <div className={`flex items-center justify-between gap-2 ${isDragging && "invisible"}`}>
       <div ref={setNodeRef} className={`cursor-grab flex items-center gap-2`} {...listeners} {...attributes} >
-        <LuGripVertical className="text-muted flex-shrink-0" />
+        <LuGripVertical className="text-muted shrink-0" />
         <PlaylistCover playlist={playlist} />
         <p className="flex-1 line-clamp-2 overflow-hidden text-ellipsis break-words">
           {playlist.name}
         </p>
       </div>
-      <p className={`ml-auto text-muted flex-shrink-0 whitespace-nowrap`}>
+      <p className={`ml-auto text-muted shrink-0 whitespace-nowrap`}>
         {playlist.trackAmount}
       </p>
     </div>

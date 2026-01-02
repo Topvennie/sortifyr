@@ -13,14 +13,16 @@ import (
 )
 
 type generator struct {
-	history repository.History
+	history  repository.History
+	playlist repository.Playlist
 }
 
 var G *generator
 
 func Init(repo repository.Repository) {
 	G = &generator{
-		history: *repo.NewHistory(),
+		history:  *repo.NewHistory(),
+		playlist: *repo.NewPlaylist(),
 	}
 }
 
@@ -65,6 +67,21 @@ func (g *generator) forgotten(gen model.Generator) ([]model.Track, error) {
 func (g *generator) top(ctx context.Context, gen model.Generator) ([]model.Track, error) {
 	params := gen.Params.ParamsTop
 
+	// Get all excluded tracks
+	// Can be from the excluded tracks list
+	// Or the excluded playlists list
+	excludedPlaylistTracks, err := g.playlist.GetTrackByPlaylistIDs(ctx, gen.Params.ExcludedPlaylistIDs)
+	if err != nil {
+		return nil, err
+	}
+	excludedTracksMap := make(map[int]bool)
+	for _, t := range excludedPlaylistTracks {
+		excludedTracksMap[t.TrackID] = true
+	}
+	for _, t := range gen.Params.ExcludedTrackIDs {
+		excludedTracksMap[t] = true
+	}
+
 	// Get history for last 14 days
 	skipped := false
 	history, err := g.history.GetPopulatedFiltered(ctx, model.HistoryFilter{
@@ -95,6 +112,11 @@ func (g *generator) top(ctx context.Context, gen model.Generator) ([]model.Track
 
 		seen[h.TrackID] = true
 
+		// Did the user exclude it
+		if excludedTracksMap[h.TrackID] {
+			continue
+		}
+
 		if hasBurst(playedAts[h.TrackID], params.Window) {
 			tracks = append(tracks, trackPlayCount{
 				track:     h.Track,
@@ -118,9 +140,24 @@ func (g *generator) top(ctx context.Context, gen model.Generator) ([]model.Track
 
 func (g *generator) oldTop(ctx context.Context, gen model.Generator) ([]model.Track, error) {
 	params := gen.Params.ParamsOldTop
-	skipped := false
+
+	// Get all excluded tracks
+	// Can be from the excluded tracks list
+	// Or the excluded playlists list
+	excludedPlaylistTracks, err := g.playlist.GetTrackByPlaylistIDs(ctx, gen.Params.ExcludedPlaylistIDs)
+	if err != nil {
+		return nil, err
+	}
+	excludedTracksMap := make(map[int]bool)
+	for _, t := range excludedPlaylistTracks {
+		excludedTracksMap[t.TrackID] = true
+	}
+	for _, t := range gen.Params.ExcludedTrackIDs {
+		excludedTracksMap[t] = true
+	}
 
 	// Get the relevant recent history
+	skipped := false
 	recent, err := g.history.GetPopulatedFiltered(ctx, model.HistoryFilter{
 		UserID:  gen.UserID,
 		Start:   params.RecentWindow.Start,
@@ -170,6 +207,11 @@ func (g *generator) oldTop(ctx context.Context, gen model.Generator) ([]model.Tr
 		}
 
 		seen[o.TrackID] = true
+
+		// Did the user exclude it
+		if excludedTracksMap[o.TrackID] {
+			continue
+		}
 
 		// Did we play it too much recently?
 		if hasBurst(recentPlayedAts[o.TrackID], params.RecentWindow) {

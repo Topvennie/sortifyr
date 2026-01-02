@@ -1,16 +1,32 @@
 import { GeneratorPreset, generatorSchema, GeneratorSchema } from "@/lib/types/generator";
 import { daysAgo } from "@/lib/utils";
-import { Divider, Group, Stepper } from "@mantine/core";
 import { useForm } from "@mantine/form";
+import { useNavigate } from "@tanstack/react-router";
 import { zod4Resolver } from "mantine-form-zod-resolver";
-import { useState } from "react";
-import { Button } from "../atoms/Button";
+import { useMemo, useState } from "react";
+import { Step, Stepper } from "../molecules/Stepper";
 import { GeneratorFormPreset } from "./GeneratorFormPreset";
+import { GeneratorFormTrack } from "./GeneratorFormTrack";
+import { Stack } from "@mantine/core";
 
 const maxSteps = 3
 
+const steps: Step[] = [
+  {
+    title: "Preset & Parameters",
+  },
+  {
+    title: "Select Tracks",
+  },
+  {
+    title: "Finalize & Save",
+  }
+]
+
 export const GeneratorForm = () => {
   const [active, setActive] = useState(0)
+
+  const navigate = useNavigate()
 
   const form = useForm<GeneratorSchema>({
     initialValues: {
@@ -41,7 +57,7 @@ export const GeneratorForm = () => {
           recentWindow: {
             start: daysAgo(14), // 14 days ago
             end: new Date(),
-            minPlays: 5,
+            minPlays: 2,
             burstIntervalS: 14 * 24 * 60 * 60 // 14 days
           }
         }
@@ -50,26 +66,37 @@ export const GeneratorForm = () => {
     validate: zod4Resolver(generatorSchema),
   })
 
+  const handleNextStep = () => {
+    if (active < maxSteps - 1) {
+      setActive(prev => prev + 1)
+      return
+    }
+  }
+
+  const handlePrevStep = () => {
+    if (active === 0) {
+      navigate({ to: "/generator" })
+      return
+    }
+
+    setActive(prev => prev - 1)
+  }
+
+  const stepComponent = useMemo(() => {
+    switch (active) {
+      case 0:
+        return <GeneratorFormPreset form={form} nextStep={handleNextStep} prevStep={handlePrevStep} />
+      case 1:
+        return <GeneratorFormTrack form={form} />
+      default:
+        return null
+    }
+  }, [active])
+
   return (
-    <div className="flex flex-col gap-4 h-full">
-      <Stepper active={active} onStepClick={setActive} allowNextStepsSelect={false} className="flex-1 overflow-y-auto">
-        <Stepper.Step label="Preset & Parameters">
-          <GeneratorFormPreset form={form} />
-        </Stepper.Step>
-        <Stepper.Step label="Select tracks">
-        </Stepper.Step>
-        <Stepper.Step label="Finalize & Save">
-        </Stepper.Step>
-      </Stepper>
-      <Divider />
-      <Group justify="space-between">
-        <p>{`Step ${active + 1} of ${maxSteps}`}</p>
-        <Group>
-          <Button color="gray">Cancel</Button>
-          <Button>Next</Button>
-        </Group>
-      </Group>
-    </div>
+    <Stack className="flex-1 rounded-xl overflow-auto">
+      <Stepper steps={steps} activeStep={active} />
+      {stepComponent}
+    </Stack>
   )
 }
-

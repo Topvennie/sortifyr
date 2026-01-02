@@ -45,7 +45,7 @@ export const LinkTreeNode = ({ directory, side, level }: Props) => {
         onMouseUp={() => finishConnection(id)}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className={`rounded-xl ${isHovered && "bg-[var(--mantine-color-background-1)]"}`}
+        className={`rounded-xl ${isHovered && "bg-(--mantine-color-background-1)"}`}
       >
         <LuFolderOpen className="size-6" />
         <p className="font-semibold">{directory.name}</p>

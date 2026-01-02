@@ -15,7 +15,6 @@ LEFT JOIN playlist_users pu ON pu.playlist_id = p.id
 WHERE pu.user_id = $1 AND pu.deleted_at IS NULL
 ORDER BY p.name;
 
-
 -- name: PlaylistGetByUserWithOwner :many
 SELECT sqlc.embed(p), sqlc.embed(u)
 FROM playlists p

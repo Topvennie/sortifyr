@@ -45,6 +45,8 @@ declare module "mantine-datatable" {
     customLoader?: ReactNode;
     onScrollToBottom?: () => void;
 
+    selectionTrigger?: "cell" | "checkbox";
+
     styles?: {
       root: (theme: MantineTheme) => Record<string, string>,
       header: (theme: MantineTheme) => Record<string, string>,

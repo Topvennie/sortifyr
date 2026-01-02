@@ -120,6 +120,18 @@ func (p *Playlist) GetUnplayableTracksByUser(ctx context.Context, userID int) ([
 	return utils.MapValues(playlistMap), nil
 }
 
+func (p *Playlist) GetTrackByPlaylistIDs(ctx context.Context, playlistIDs []int) ([]*model.PlaylistTrack, error) {
+	tracks, err := p.repo.queries(ctx).PlaylistTrackGetByPlaylistIds(ctx, utils.SliceMap(playlistIDs, func(p int) int32 { return int32(p) }))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("get tracks by playlists ids %+v | %w", playlistIDs, err)
+	}
+
+	return utils.SliceMap(tracks, model.PlaylistTrackModel), nil
+}
+
 func (p *Playlist) Create(ctx context.Context, playlist *model.Playlist) error {
 	id, err := p.repo.queries(ctx).PlaylistCreate(ctx, sqlc.PlaylistCreateParams{
 		SpotifyID:     playlist.SpotifyID,

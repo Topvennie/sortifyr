@@ -33,10 +33,10 @@ export const LinkTreePlaylist = ({ playlist, side }: Props) => {
       onMouseUp={() => finishConnection(id)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`flex items-center gap-2 rounded-xl ${isHovered && "bg-[var(--mantine-color-background-1)]"}`}
+      className={`flex items-center gap-2 rounded-xl ${isHovered && "bg-(--mantine-color-background-1)"}`}
     >
       <PlaylistCover playlist={playlist} />
-      <p className="line-clamp-1 overflow-hidden text-ellipsis break-words">{playlist.name}</p>
+      <p className="line-clamp-1 overflow-hidden text-ellipsis wrap-break-word">{playlist.name}</p>
       <p className="text-muted text-sm">{playlist.trackAmount}</p>
       {hidden > 0 && <p className="text-red-500 text-sm">{`(${hidden})`}</p>}
       <div ref={el => registerAnchor(id, { el, side, playlist })} className={`absolute ${side === "left" ? "right-1" : "left-1"}`}>

@@ -8,9 +8,7 @@ export const GeneratorCreate = () => {
         title="Create a new playlist generator"
       />
 
-      <Section>
-        <GeneratorForm />
-      </Section>
+      <GeneratorForm />
     </Page>
   )
 }

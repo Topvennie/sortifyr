@@ -17,7 +17,7 @@ export const DirectoryTreeNode = ({ directory, level }: Props) => {
   return (
     <Stack gap={2}>
       <Group style={{ marginLeft: level * offSet }}>
-        <Group py={2} px="xs" gap="xs" onClick={() => setExpanded(prev => !prev)} className="cursor-pointer hover:bg-[var(--mantine-color-background-1)] rounded-xl">
+        <Group py={2} px="xs" gap="xs" onClick={() => setExpanded(prev => !prev)} className="cursor-pointer hover:bg-(--mantine-color-background-1) rounded-xl">
           <ActionIcon variant="transparent" color="black" size="sm">
             <LuTriangle className={`fill-black w-2 ${expanded && "rotate-180"}`} />
           </ActionIcon>
