@@ -87,7 +87,7 @@ export const GeneratorForm = () => {
       case 0:
         return <GeneratorFormPreset form={form} nextStep={handleNextStep} prevStep={handlePrevStep} />
       case 1:
-        return <GeneratorFormTrack form={form} />
+        return <GeneratorFormTrack form={form} nextStep={handleNextStep} prevStep={handlePrevStep} />
       default:
         return null
     }

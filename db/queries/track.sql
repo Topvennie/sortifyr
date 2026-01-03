@@ -2,6 +2,11 @@
 SELECT *
 FROM tracks;
 
+-- name: TrackGetAllById :many
+SELECT *
+FROM tracks
+WHERE id = ANY($1::int[]);
+
 -- name: TrackGetBySpotify :one
 SELECT *
 FROM tracks

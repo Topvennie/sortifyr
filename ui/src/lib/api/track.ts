@@ -1,10 +1,27 @@
-import { useInfiniteQuery } from "@tanstack/react-query"
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
 import { STALE_TIME } from "../types/staletime"
-import { convertTrackHistories, convertTracksAdded, convertTracksDeleted, TrackFilter, TrackHistoryFilter } from "../types/track"
+import { convertTrackHistories, convertTracks, convertTracksAdded, convertTracksDeleted, TrackFilter, TrackHistoryFilter } from "../types/track"
 import { apiGet } from "./query"
 
 const ENDPOINT = "track"
 const PAGE_LIMIT = 100
+
+export const useTrackGetAllById = (trackIds?: number[]) => {
+  return useQuery({
+    queryKey: ["track", "ids", trackIds],
+    queryFn: async () => {
+      const queryParams = new URLSearchParams({
+        ids: trackIds?.toString() ?? "[]",
+      })
+
+      const url = `${ENDPOINT}/ids?${queryParams.toString()}`
+      return (await apiGet(url, convertTracks)).data
+    },
+    staleTime: Infinity,
+    throwOnError: true,
+    enabled: !!trackIds,
+  })
+}
 
 export const useTrackGetHistory = (filter?: TrackHistoryFilter) => {
   const { data, isLoading, fetchNextPage, isFetchingNextPage, hasNextPage, error, refetch, isFetching } = useInfiniteQuery({

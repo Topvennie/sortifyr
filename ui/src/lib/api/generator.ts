@@ -7,6 +7,7 @@ const ENDPOINT = "generator"
 
 export const useGeneratorPreview = () => {
   return useMutation({
+    mutationKey: ["generator", "preview"],
     mutationFn: async (generator: GeneratorSchema) => (await apiPost(`${ENDPOINT}/preview`, generator.params, convertTracks)).data,
     throwOnError: true,
   })

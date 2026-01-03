@@ -20,7 +20,6 @@ type Props = {
 
 export const GeneratorFormPreset = ({ form, nextStep, prevStep }: Props) => {
   const { mutate: generatorPreview, data: tracks, isPending } = useGeneratorPreview()
-
   useEffect(() => generatorPreview(form.getValues()), [])
 
   const handleClickPreset = (p: GeneratorPreset) => {

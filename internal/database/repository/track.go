@@ -33,6 +33,18 @@ func (t *Track) GetAll(ctx context.Context) ([]*model.Track, error) {
 	return utils.SliceMap(tracks, model.TrackModel), nil
 }
 
+func (t *Track) GetAllByID(ctx context.Context, trackIDs []int) ([]*model.Track, error) {
+	tracks, err := t.repo.queries(ctx).TrackGetAllById(ctx, utils.SliceMap(trackIDs, func(t int) int32 { return int32(t) }))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("get all tracks by id %+v | %w", trackIDs, err)
+	}
+
+	return utils.SliceMap(tracks, model.TrackModel), nil
+}
+
 func (t *Track) GetBySpotify(ctx context.Context, spotifyID string) (*model.Track, error) {
 	track, err := t.repo.queries(ctx).TrackGetBySpotify(ctx, spotifyID)
 	if err != nil {

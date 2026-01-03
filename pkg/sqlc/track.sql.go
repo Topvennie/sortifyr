@@ -68,6 +68,39 @@ func (q *Queries) TrackGetAll(ctx context.Context) ([]Track, error) {
 	return items, nil
 }
 
+const trackGetAllById = `-- name: TrackGetAllById :many
+SELECT id, spotify_id, name, popularity, updated_at, duration_ms
+FROM tracks
+WHERE id = ANY($1::int[])
+`
+
+func (q *Queries) TrackGetAllById(ctx context.Context, dollar_1 []int32) ([]Track, error) {
+	rows, err := q.db.Query(ctx, trackGetAllById, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Track
+	for rows.Next() {
+		var i Track
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpotifyID,
+			&i.Name,
+			&i.Popularity,
+			&i.UpdatedAt,
+			&i.DurationMs,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const trackGetAllBySpotify = `-- name: TrackGetAllBySpotify :many
 SELECT id, spotify_id, name, popularity, updated_at, duration_ms
 FROM tracks

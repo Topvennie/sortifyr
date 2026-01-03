@@ -26,6 +26,16 @@ func (s *Service) NewTrack() *Track {
 	}
 }
 
+func (t *Track) GetByIds(ctx context.Context, trackIDs []int) ([]dto.Track, error) {
+	tracks, err := t.track.GetAllByID(ctx, trackIDs)
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return utils.SliceMap(tracks, dto.TrackDTO), nil
+}
+
 func (t *Track) GetHistory(ctx context.Context, filter dto.HistoryFilter) ([]dto.History, error) {
 	filterModel := filter.ToModel()
 	if filterModel.Skipped == nil {

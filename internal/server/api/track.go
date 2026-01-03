@@ -27,9 +27,27 @@ func NewTrack(router fiber.Router, service service.Service) *Track {
 }
 
 func (r *Track) createRoutes() {
+	r.router.Get("/ids", r.getAllByID)
 	r.router.Get("/history", r.getHistory)
 	r.router.Get("/added", r.getAdded)
 	r.router.Get("/deleted", r.getDeleted)
+}
+
+func (r *Track) getAllByID(c *fiber.Ctx) error {
+	type params struct {
+		IDs []int `json:"ids"`
+	}
+	var p params
+	if err := c.QueryParser(&p); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	tracks, err := r.track.GetByIds(c.Context(), p.IDs)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(tracks)
 }
 
 func (r *Track) getHistory(c *fiber.Ctx) error {
