@@ -11,7 +11,7 @@ import (
 	"github.com/shareed2k/goth_fiber"
 	"github.com/topvennie/sortifyr/internal/server/dto"
 	"github.com/topvennie/sortifyr/internal/server/service"
-	"github.com/topvennie/sortifyr/internal/spotify"
+	"github.com/topvennie/sortifyr/internal/spotifyapi"
 	"github.com/topvennie/sortifyr/pkg/config"
 	"go.uber.org/zap"
 )
@@ -92,7 +92,7 @@ func (r *Auth) loginCallback(c *fiber.Ctx) error {
 		}
 	}
 
-	if err := spotify.C.NewUser(c.Context(), *dtoUser.ToModel(), user.AccessToken, user.RefreshToken, time.Until(user.ExpiresAt)); err != nil {
+	if err := spotifyapi.C.NewUser(c.Context(), *dtoUser.ToModel(), user.AccessToken, user.RefreshToken, time.Until(user.ExpiresAt)); err != nil {
 		zap.S().Error(err)
 		return fiber.ErrInternalServerError
 	}

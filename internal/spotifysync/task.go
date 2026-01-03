@@ -11,67 +11,15 @@ import (
 )
 
 const (
-	taskArtistUID            = "task-artist"
-	taskAlbumUID             = "task-album"
-	taskHistoryUID           = "task-history"
-	taskLinkUID              = "task-link"
-	taskPlaylistUID          = "task-playlist"
-	taskPlaylistDuplicateUID = "task-playlist-duplicate"
-	taskShowUID              = "task-show"
-	taskTrackUID             = "task-track"
-	taskUserUID              = "task-user"
-	taskExportUID            = "task-export"
+	taskArtistUID   = "task-artist"
+	taskAlbumUID    = "task-album"
+	taskHistoryUID  = "task-history"
+	taskLinkUID     = "task-link"
+	taskPlaylistUID = "task-playlist"
+	taskShowUID     = "task-show"
+	taskTrackUID    = "task-track"
+	taskUserUID     = "task-user"
 )
-
-func (c *client) TaskPlaylistDuplicate(ctx context.Context, user model.User) error {
-	if err := task.Manager.Add(ctx, task.NewTask(
-		taskPlaylistDuplicateUID,
-		"Playlist Duplicates Remove",
-		task.IntervalOnce,
-		func(ctx context.Context, _ []model.User) []task.TaskResult {
-			results := []task.TaskResult{{
-				User:    user,
-				Message: "",
-				Error:   nil,
-			}}
-
-			if err := c.playlistRemoveDuplicates(ctx, user); err != nil {
-				results[0].Error = err
-			}
-
-			return results
-		},
-	)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c *client) TaskExport(ctx context.Context, user model.User, zip []byte) error {
-	if err := task.Manager.Add(ctx, task.NewTask(
-		taskExportUID,
-		"Import Spotify Export",
-		task.IntervalOnce,
-		func(ctx context.Context, _ []model.User) []task.TaskResult {
-			results := []task.TaskResult{{
-				User:    user,
-				Message: "",
-				Error:   nil,
-			}}
-
-			if err := c.exportZip(ctx, user, zip); err != nil {
-				results[0].Error = err
-			}
-
-			return results
-		},
-	)); err != nil {
-		return err
-	}
-
-	return nil
-}
 
 func (c *client) taskRegister(ctx context.Context) error {
 	if err := task.Manager.Add(ctx, task.NewTask(

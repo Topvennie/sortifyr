@@ -8,12 +8,14 @@ import (
 	"github.com/topvennie/sortifyr/internal/database/model"
 	"github.com/topvennie/sortifyr/internal/database/repository"
 	"github.com/topvennie/sortifyr/internal/server/dto"
-	"github.com/topvennie/sortifyr/internal/spotify"
+	"github.com/topvennie/sortifyr/internal/spotifyapi"
 	"github.com/topvennie/sortifyr/internal/task"
 	"github.com/topvennie/sortifyr/pkg/storage"
 	"github.com/topvennie/sortifyr/pkg/utils"
 	"go.uber.org/zap"
 )
+
+const taskPlaylistDuplicateUID = "task-playlist-duplicate"
 
 type Playlist struct {
 	service Service
@@ -109,12 +111,55 @@ func (p *Playlist) RemoveDuplicates(ctx context.Context, userID int) error {
 		return fiber.ErrUnauthorized
 	}
 
-	if err := spotify.C.TaskPlaylistDuplicate(ctx, *user); err != nil {
+	if err := task.Manager.Add(ctx, task.NewTask(
+		taskPlaylistDuplicateUID,
+		"Playlist Duplicates Removal",
+		task.IntervalOnce,
+		func(ctx context.Context, _ []model.User) []task.TaskResult {
+			return []task.TaskResult{{
+				User:    *user,
+				Message: "",
+				Error:   p.removeDuplicatesTask(ctx, *user),
+			}}
+		},
+	)); err != nil {
 		if errors.Is(err, task.ErrTaskExists) {
 			return fiber.NewError(fiber.StatusBadRequest, "Task is already running")
 		}
 		zap.S().Error(err)
 		return fiber.ErrInternalServerError
+	}
+
+	return nil
+}
+
+func (p *Playlist) removeDuplicatesTask(ctx context.Context, user model.User) error {
+	// Spotify's API will remove every instance of a track in a playlist
+	// That's why we first need to make an API call to delete them
+	// Which deleted all instances
+	// And then add them back so that we dont lose them.
+	playlists, err := p.playlist.GetDuplicateTracksByUser(ctx, user.ID)
+	if err != nil {
+		return err
+	}
+
+	for i := range playlists {
+		if playlists[i].SnapshotID == "" {
+			continue
+		}
+
+		unique := utils.SliceUniqueFunc(playlists[i].Duplicates, func(t model.Track) string { return t.SpotifyID })
+		filtered := utils.SliceFilter(unique, func(t model.Track) bool { return t.SpotifyID != "" })
+
+		// Remove them all
+		if err := spotifyapi.C.PlaylistDeleteTrackAll(ctx, user, playlists[i].SpotifyID, playlists[i].SnapshotID, filtered); err != nil {
+			return err
+		}
+
+		// Add them all back
+		if err := spotifyapi.C.PlaylistPostTrackAll(ctx, user, playlists[i].SpotifyID, filtered); err != nil {
+			return err
+		}
 	}
 
 	return nil

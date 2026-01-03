@@ -68,7 +68,7 @@ func (c *client) historySync(ctx context.Context, user model.User) error {
 		TrackID:  track.ID,
 	}
 
-	contextSpotifyID := uriToID(current.Context.URI)
+	contextSpotifyID := UriToID(current.Context.URI)
 
 	switch current.Context.Type {
 	case "album":
