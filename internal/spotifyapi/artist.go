@@ -1,4 +1,4 @@
-package api
+package spotifyapi
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/topvennie/sortifyr/pkg/concurrent"
 )
 
-func (c *Client) ArtistGet(ctx context.Context, user model.User, spotifyID string) (Artist, error) {
+func (c *client) ArtistGet(ctx context.Context, user model.User, spotifyID string) (Artist, error) {
 	var resp Artist
 
 	if err := c.request(ctx, user, http.MethodGet, "artists/"+spotifyID, http.NoBody, &resp); err != nil {
@@ -26,7 +26,7 @@ type artistAllResponse struct {
 	Artists []Artist `json:"artists"`
 }
 
-func (c *Client) ArtistGetAll(ctx context.Context, user model.User, artistIDs []string) ([]Artist, error) {
+func (c *client) ArtistGetAll(ctx context.Context, user model.User, artistIDs []string) ([]Artist, error) {
 	wg := concurrent.NewLimitedWaitGroup(12)
 
 	var mu sync.Mutex

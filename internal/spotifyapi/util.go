@@ -1,4 +1,4 @@
-package api
+package spotifyapi
 
 import "github.com/topvennie/sortifyr/internal/database/model"
 

@@ -1,11 +1,11 @@
-package spotify
+package spotifysync
 
 import (
 	"context"
 	"time"
 
 	"github.com/topvennie/sortifyr/internal/database/model"
-	"github.com/topvennie/sortifyr/internal/spotify/api"
+	"github.com/topvennie/sortifyr/internal/spotifyapi"
 	"github.com/topvennie/sortifyr/pkg/utils"
 )
 
@@ -28,11 +28,11 @@ func (c *client) trackUpdate(ctx context.Context, user model.User) error {
 		return nil
 	}
 
-	tracksSpotifyAPI, err := c.api.TrackGetAll(ctx, user, filtered)
+	tracksSpotifyAPI, err := spotifyapi.C.TrackGetAll(ctx, user, filtered)
 	if err != nil {
 		return nil
 	}
-	tracksSpotify := utils.SliceMap(tracksSpotifyAPI, func(t api.Track) model.Track { return t.ToModel() })
+	tracksSpotify := utils.SliceMap(tracksSpotifyAPI, func(t spotifyapi.Track) model.Track { return t.ToModel() })
 
 	for i := range tracksSpotify {
 		trackDB, ok := utils.SliceFind(tracksDB, func(t *model.Track) bool { return t.Equal(tracksSpotify[i]) })
@@ -58,7 +58,7 @@ func (c *client) trackUpdate(ctx context.Context, user model.User) error {
 			return err
 		}
 
-		artistsSpotify := utils.SliceMap(tracksSpotifyAPI[i].Artists, func(a api.Artist) model.Artist { return a.ToModel() })
+		artistsSpotify := utils.SliceMap(tracksSpotifyAPI[i].Artists, func(a spotifyapi.Artist) model.Artist { return a.ToModel() })
 
 		if err := syncUserData(syncUserDataStruct[model.Artist]{
 			DB:     utils.SliceDereference(artistsDB),

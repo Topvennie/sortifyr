@@ -1,13 +1,10 @@
-// Package spotify syncrhonizes our local database with the spotify api
-package spotify
+// Package spotifysync syncronizes our local database with the spotify api
+package spotifysync
 
 import (
 	"context"
-	"time"
 
-	"github.com/topvennie/sortifyr/internal/database/model"
 	"github.com/topvennie/sortifyr/internal/database/repository"
-	"github.com/topvennie/sortifyr/internal/spotify/api"
 )
 
 // Data updates are typically split in 3 parts
@@ -26,8 +23,6 @@ import (
 // then you get an array of simplified playlist objects
 
 type client struct {
-	api api.Client
-
 	album     repository.Album
 	artist    repository.Artist
 	directory repository.Directory
@@ -42,13 +37,7 @@ type client struct {
 var C *client
 
 func Init(repo repository.Repository) error {
-	apiClient, err := api.New()
-	if err != nil {
-		return err
-	}
-
 	C = &client{
-		api:       *apiClient,
 		album:     *repo.NewAlbum(),
 		artist:    *repo.NewArtist(),
 		directory: *repo.NewDirectory(),
@@ -65,8 +54,4 @@ func Init(repo repository.Repository) error {
 	}
 
 	return nil
-}
-
-func (c *client) NewUser(ctx context.Context, user model.User, accessToken, refreshToken string, expiresIn time.Duration) error {
-	return c.api.NewUser(ctx, user, accessToken, refreshToken, expiresIn)
 }

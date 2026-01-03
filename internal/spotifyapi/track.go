@@ -1,4 +1,4 @@
-package api
+package spotifyapi
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/topvennie/sortifyr/pkg/concurrent"
 )
 
-func (c *Client) TrackGet(ctx context.Context, user model.User, spotifyID string) (Track, error) {
+func (c *client) TrackGet(ctx context.Context, user model.User, spotifyID string) (Track, error) {
 	var resp Track
 
 	if err := c.request(ctx, user, http.MethodGet, "tracks/"+spotifyID, http.NoBody, &resp); err != nil {
@@ -26,7 +26,7 @@ type trackAllResponse struct {
 	Tracks []Track `json:"tracks"`
 }
 
-func (c *Client) TrackGetAll(ctx context.Context, user model.User, trackIDs []string) ([]Track, error) {
+func (c *client) TrackGetAll(ctx context.Context, user model.User, trackIDs []string) ([]Track, error) {
 	wg := concurrent.NewLimitedWaitGroup(12)
 
 	var mu sync.Mutex

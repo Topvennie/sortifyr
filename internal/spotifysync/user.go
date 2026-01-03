@@ -1,9 +1,10 @@
-package spotify
+package spotifysync
 
 import (
 	"context"
 
 	"github.com/topvennie/sortifyr/internal/database/model"
+	"github.com/topvennie/sortifyr/internal/spotifyapi"
 	"github.com/topvennie/sortifyr/pkg/utils"
 )
 
@@ -24,7 +25,7 @@ func (c *client) syncUser(ctx context.Context, user model.User) error {
 	// Get all spotify users
 	usersSpotify := make([]model.User, 0, len(usersDB))
 	for _, userDB := range usersDB {
-		newUser, err := c.api.UserGet(ctx, user, userDB)
+		newUser, err := spotifyapi.C.UserGet(ctx, user, userDB)
 		if err != nil {
 			return err
 		}

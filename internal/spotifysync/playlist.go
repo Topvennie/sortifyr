@@ -1,10 +1,10 @@
-package spotify
+package spotifysync
 
 import (
 	"context"
 
 	"github.com/topvennie/sortifyr/internal/database/model"
-	"github.com/topvennie/sortifyr/internal/spotify/api"
+	"github.com/topvennie/sortifyr/internal/spotifyapi"
 	"github.com/topvennie/sortifyr/pkg/utils"
 )
 
@@ -14,7 +14,7 @@ func (c *client) playlistSync(ctx context.Context, user model.User) error {
 		return err
 	}
 
-	playlistsSpotifyAPI, err := c.api.PlaylistGetUser(ctx, user)
+	playlistsSpotifyAPI, err := spotifyapi.C.PlaylistGetUser(ctx, user)
 	if err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func (c *client) playlistUpdate(ctx context.Context, user model.User) error {
 		return err
 	}
 
-	playlistsSpotifyAPI, err := c.api.PlaylistGetUser(ctx, user)
+	playlistsSpotifyAPI, err := spotifyapi.C.PlaylistGetUser(ctx, user)
 	if err != nil {
 		return err
 	}
@@ -111,11 +111,11 @@ func (c *client) playlistUpdate(ctx context.Context, user model.User) error {
 			return err
 		}
 
-		tracksSpotifyAPI, err := c.api.PlaylistGetTrackAll(ctx, user, playlistsSpotify[i].SpotifyID)
+		tracksSpotifyAPI, err := spotifyapi.C.PlaylistGetTrackAll(ctx, user, playlistsSpotify[i].SpotifyID)
 		if err != nil {
 			return err
 		}
-		tracksSpotify := utils.SliceMap(tracksSpotifyAPI, func(t api.Track) model.Track { return t.ToModel() })
+		tracksSpotify := utils.SliceMap(tracksSpotifyAPI, func(t spotifyapi.Track) model.Track { return t.ToModel() })
 
 		if err := syncUserData(syncUserDataStruct[model.Track]{
 			DB:  utils.SliceDereference(tracksDB),
@@ -199,15 +199,29 @@ func (c *client) playlistRemoveDuplicates(ctx context.Context, user model.User) 
 		filtered := utils.SliceFilter(unique, func(t model.Track) bool { return t.SpotifyID != "" })
 
 		// Remove them all
-		if err := c.api.PlaylistDeleteTrackAll(ctx, user, playlists[i].SpotifyID, playlists[i].SnapshotID, filtered); err != nil {
+		if err := spotifyapi.C.PlaylistDeleteTrackAll(ctx, user, playlists[i].SpotifyID, playlists[i].SnapshotID, filtered); err != nil {
 			return err
 		}
 
 		// Add them all back
-		if err := c.api.PlaylistPostTrackAll(ctx, user, playlists[i].SpotifyID, filtered); err != nil {
+		if err := spotifyapi.C.PlaylistPostTrackAll(ctx, user, playlists[i].SpotifyID, filtered); err != nil {
 			return err
 		}
 	}
 
+	return nil
+}
+
+func (c *client) PlaylistCreate(ctx context.Context, user model.User, playlist *model.Playlist) error {
+	// TODO: Implement
+	return nil
+}
+
+func (c *client) PlaylistAddTracks(ctx context.Context, user model.User, playlist model.Playlist, tracks []model.Track) error {
+	return spotifyapi.C.PlaylistPostTrackAll(ctx, user, playlist.SpotifyID, tracks)
+}
+
+func (c *client) PlaylistDelete(ctx context.Context, user model.User, playlist model.Playlist) error {
+	// TODO: Implement
 	return nil
 }

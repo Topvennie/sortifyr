@@ -1,10 +1,11 @@
-package spotify
+package spotifysync
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/topvennie/sortifyr/internal/database/model"
+	"github.com/topvennie/sortifyr/internal/spotifyapi"
 	"github.com/topvennie/sortifyr/pkg/utils"
 )
 
@@ -101,7 +102,7 @@ func (c *client) linkOneSync(ctx context.Context, user model.User, source, targe
 		}
 	}
 
-	if err := c.api.PlaylistPostTrackAll(ctx, user, target.SpotifyID, toAdd); err != nil {
+	if err := spotifyapi.C.PlaylistPostTrackAll(ctx, user, target.SpotifyID, toAdd); err != nil {
 		return err
 	}
 

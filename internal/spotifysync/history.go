@@ -1,14 +1,15 @@
-package spotify
+package spotifysync
 
 import (
 	"context"
 	"time"
 
 	"github.com/topvennie/sortifyr/internal/database/model"
+	"github.com/topvennie/sortifyr/internal/spotifyapi"
 )
 
 func (c *client) historySync(ctx context.Context, user model.User) error {
-	current, err := c.api.PlayerGetCurrent(ctx, user)
+	current, err := spotifyapi.C.PlayerGetCurrent(ctx, user)
 	if err != nil {
 		return err
 	}

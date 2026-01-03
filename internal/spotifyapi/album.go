@@ -1,4 +1,4 @@
-package api
+package spotifyapi
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/topvennie/sortifyr/internal/database/model"
 )
 
-func (c *Client) AlbumGet(ctx context.Context, user model.User, spotifyID string) (Album, error) {
+func (c *client) AlbumGet(ctx context.Context, user model.User, spotifyID string) (Album, error) {
 	var resp Album
 
 	if err := c.request(ctx, user, http.MethodGet, "albums/"+spotifyID, http.NoBody, &resp); err != nil {
@@ -24,7 +24,7 @@ type albumUserResponse struct {
 	Items []Album `json:"items"`
 }
 
-func (c *Client) AlbumGetUser(ctx context.Context, user model.User) ([]Album, error) {
+func (c *client) AlbumGetUser(ctx context.Context, user model.User) ([]Album, error) {
 	albums := make([]Album, 0)
 
 	total := 51
@@ -48,7 +48,7 @@ type albumAllResponse struct {
 	Albums []Album `json:"albums"`
 }
 
-func (c *Client) AlbumGetAll(ctx context.Context, user model.User, albumIDs []string) ([]Album, error) {
+func (c *client) AlbumGetAll(ctx context.Context, user model.User, albumIDs []string) ([]Album, error) {
 	albums := make([]Album, 0, len(albumIDs))
 
 	limit := 20
@@ -72,7 +72,7 @@ type albumTrackResponse struct {
 	Items []Track `json:"items"`
 }
 
-func (c *Client) AlbumGetTrackAll(ctx context.Context, user model.User, spotifyID string) ([]Track, error) {
+func (c *client) AlbumGetTrackAll(ctx context.Context, user model.User, spotifyID string) ([]Track, error) {
 	tracks := make([]Track, 0)
 
 	total := 51

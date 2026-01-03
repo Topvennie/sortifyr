@@ -1,4 +1,4 @@
-package spotify
+package spotifysync
 
 import (
 	"bytes"
@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/topvennie/sortifyr/internal/spotifyapi"
 	"github.com/topvennie/sortifyr/pkg/concurrent"
 	"github.com/topvennie/sortifyr/pkg/storage"
 )
@@ -126,7 +127,7 @@ func (c *client) syncCover(ctx context.Context, s []syncCoverStruct) error {
 		}
 
 		wg.Go(func() {
-			cover, err := c.api.ImageGet(ctx, item.CoverURL)
+			cover, err := spotifyapi.C.ImageGet(ctx, item.CoverURL)
 			if err != nil {
 				mu.Lock()
 				errs = append(errs, err)

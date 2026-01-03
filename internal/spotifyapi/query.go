@@ -1,4 +1,4 @@
-package api
+package spotifyapi
 
 import (
 	"context"
@@ -33,7 +33,7 @@ type accountResponse struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-func (c *Client) refreshToken(ctx context.Context, user model.User) error {
+func (c *client) refreshToken(ctx context.Context, user model.User) error {
 	zap.S().Info("Refreshing spotify access token")
 
 	refreshToken, err := redis.C.Get(ctx, refreshKey(user)).Result()
@@ -96,7 +96,7 @@ func (c *Client) refreshToken(ctx context.Context, user model.User) error {
 	return nil
 }
 
-func (c *Client) getAccessToken(ctx context.Context, user model.User) (string, error) {
+func (c *client) getAccessToken(ctx context.Context, user model.User) (string, error) {
 	accessToken, err := redis.C.Get(ctx, accessKey(user)).Result()
 	if err != nil {
 		if !errors.Is(err, redis.ErrNil) {
@@ -113,7 +113,7 @@ func (c *Client) getAccessToken(ctx context.Context, user model.User) (string, e
 	return accessToken, nil
 }
 
-func (c *Client) request(ctx context.Context, user model.User, method, url string, body io.Reader, target any) error {
+func (c *client) request(ctx context.Context, user model.User, method, url string, body io.Reader, target any) error {
 	zap.S().Infof("do %s request for url %s", method, url)
 
 	accessToken, err := c.getAccessToken(ctx, user)

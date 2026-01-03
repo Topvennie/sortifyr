@@ -1,4 +1,4 @@
-package api
+package spotifyapi
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/topvennie/sortifyr/pkg/image"
 )
 
-func (c *Client) ImageGet(ctx context.Context, url string) ([]byte, error) {
+func (c *client) ImageGet(ctx context.Context, url string) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("new http request %w", err)

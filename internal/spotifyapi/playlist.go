@@ -1,4 +1,4 @@
-package api
+package spotifyapi
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ import (
 	"github.com/topvennie/sortifyr/pkg/utils"
 )
 
-func (c *Client) PlaylistGet(ctx context.Context, user model.User, spotifyID string) (Playlist, error) {
+func (c *client) PlaylistGet(ctx context.Context, user model.User, spotifyID string) (Playlist, error) {
 	var resp Playlist
 
 	if err := c.request(ctx, user, http.MethodGet, "playlists/"+spotifyID, http.NoBody, &resp); err != nil {
@@ -28,7 +28,7 @@ type playlistUserResponse struct {
 	Items []Playlist `json:"items"`
 }
 
-func (c *Client) PlaylistGetUser(ctx context.Context, user model.User) ([]Playlist, error) {
+func (c *client) PlaylistGetUser(ctx context.Context, user model.User) ([]Playlist, error) {
 	playlists := make([]Playlist, 0)
 
 	total := 51
@@ -57,7 +57,7 @@ type playlistTrackResponse struct {
 	Items []playlistTrackAPI `json:"items"`
 }
 
-func (c *Client) PlaylistGetTrackAll(ctx context.Context, user model.User, spotifyID string) ([]Track, error) {
+func (c *client) PlaylistGetTrackAll(ctx context.Context, user model.User, spotifyID string) ([]Track, error) {
 	wg := concurrent.NewLimitedWaitGroup(12)
 
 	var mu sync.Mutex
@@ -102,7 +102,7 @@ type playlistTrackAddPayload struct {
 	URIs []string `json:"uris"`
 }
 
-func (c *Client) PlaylistPostTrackAll(ctx context.Context, user model.User, spotifyID string, tracks []model.Track) error {
+func (c *client) PlaylistPostTrackAll(ctx context.Context, user model.User, spotifyID string, tracks []model.Track) error {
 	current := 0
 	total := len(tracks)
 
@@ -139,7 +139,7 @@ type playlistTrackRemoveURIPayload struct {
 	URI string `json:"uri"`
 }
 
-func (c *Client) PlaylistDeleteTrackAll(ctx context.Context, user model.User, spotifyID, snapshotID string, tracks []model.Track) error {
+func (c *client) PlaylistDeleteTrackAll(ctx context.Context, user model.User, spotifyID, snapshotID string, tracks []model.Track) error {
 	current := 0
 	total := len(tracks)
 
@@ -166,6 +166,39 @@ func (c *Client) PlaylistDeleteTrackAll(ctx context.Context, user model.User, sp
 
 		current = end
 	}
+
+	return nil
+}
+
+type playlistCreatePayload struct {
+	Name          string `json:"name"`
+	Description   string `json:"description"`
+	Public        bool   `json:"public"`
+	Collaborative bool   `json:"collaborative"`
+}
+
+func (c *client) PlaylistCreate(ctx context.Context, user model.User, playlist *model.Playlist) error {
+	payload := playlistCreatePayload{
+		Name:          playlist.Name,
+		Description:   playlist.Description,
+		Public:        *playlist.Public,
+		Collaborative: *playlist.Collaborative,
+	}
+
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("marshal create playlist payload %+v | %w", payload, err)
+	}
+
+	body := bytes.NewReader(data)
+
+	var resp Playlist
+	if err := c.request(ctx, user, http.MethodPost, fmt.Sprintf("/users/%s/playlists", user.UID), body, &resp); err != nil {
+		return err
+	}
+
+	playlist.SpotifyID = resp.SpotifyID
+	playlist.SnapshotID = resp.SnapshotID
 
 	return nil
 }

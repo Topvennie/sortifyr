@@ -1,5 +1,5 @@
-// Package api interacts with the spotify api
-package api
+// Package spotifyapi interacts with the spotify api
+package spotifyapi
 
 import (
 	"context"
@@ -12,26 +12,30 @@ import (
 	"github.com/topvennie/sortifyr/pkg/redis"
 )
 
-type Client struct {
+type client struct {
 	clientID     string
 	clientSecret string
 }
 
-func New() (*Client, error) {
+var C *client
+
+func Init() error {
 	clientID := config.GetString("auth.spotify.client.id")
 	clientSecret := config.GetString("auth.spotify.client.secret")
 
 	if clientID == "" || clientSecret == "" {
-		return nil, errors.New("client id or client secret not set")
+		return errors.New("client id or client secret not set")
 	}
 
-	return &Client{
+	C = &client{
 		clientID:     clientID,
 		clientSecret: clientSecret,
-	}, nil
+	}
+
+	return nil
 }
 
-func (c *Client) NewUser(ctx context.Context, user model.User, accessToken, refreshToken string, expiresIn time.Duration) error {
+func (c *client) NewUser(ctx context.Context, user model.User, accessToken, refreshToken string, expiresIn time.Duration) error {
 	if _, err := redis.C.Set(ctx, accessKey(user), accessToken, expiresIn).Result(); err != nil {
 		return fmt.Errorf("set access token %w", err)
 	}

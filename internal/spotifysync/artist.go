@@ -1,11 +1,11 @@
-package spotify
+package spotifysync
 
 import (
 	"context"
 	"time"
 
 	"github.com/topvennie/sortifyr/internal/database/model"
-	"github.com/topvennie/sortifyr/internal/spotify/api"
+	"github.com/topvennie/sortifyr/internal/spotifyapi"
 	"github.com/topvennie/sortifyr/pkg/utils"
 )
 
@@ -28,11 +28,11 @@ func (c *client) artistUpdate(ctx context.Context, user model.User) error {
 		return nil
 	}
 
-	artistsSpotifyAPI, err := c.api.ArtistGetAll(ctx, user, filtered)
+	artistsSpotifyAPI, err := spotifyapi.C.ArtistGetAll(ctx, user, filtered)
 	if err != nil {
 		return err
 	}
-	artistsSpotify := utils.SliceMap(artistsSpotifyAPI, func(a api.Artist) model.Artist { return a.ToModel() })
+	artistsSpotify := utils.SliceMap(artistsSpotifyAPI, func(a spotifyapi.Artist) model.Artist { return a.ToModel() })
 
 	for i := range artistsSpotify {
 		artistDB, ok := utils.SliceFind(artistsDB, func(a *model.Artist) bool { return a.Equal(artistsSpotify[i]) })

@@ -1,4 +1,4 @@
-package spotify
+package spotifysync
 
 import (
 	"archive/zip"

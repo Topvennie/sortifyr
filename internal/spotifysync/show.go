@@ -1,11 +1,11 @@
-package spotify
+package spotifysync
 
 import (
 	"context"
 	"time"
 
 	"github.com/topvennie/sortifyr/internal/database/model"
-	"github.com/topvennie/sortifyr/internal/spotify/api"
+	"github.com/topvennie/sortifyr/internal/spotifyapi"
 	"github.com/topvennie/sortifyr/pkg/utils"
 )
 
@@ -16,11 +16,11 @@ func (c *client) showSync(ctx context.Context, user model.User) error {
 		return err
 	}
 
-	showsSpotifyAPI, err := c.api.ShowGetUser(ctx, user)
+	showsSpotifyAPI, err := spotifyapi.C.ShowGetUser(ctx, user)
 	if err != nil {
 		return err
 	}
-	showsSpotify := utils.SliceMap(showsSpotifyAPI, func(s api.Show) model.Show { return s.ToModel() })
+	showsSpotify := utils.SliceMap(showsSpotifyAPI, func(s spotifyapi.Show) model.Show { return s.ToModel() })
 
 	return syncUserData(syncUserDataStruct[model.Show]{
 		DB:     utils.SliceDereference(showsDB),
@@ -56,11 +56,11 @@ func (c *client) showUpdate(ctx context.Context, user model.User) error {
 		return nil
 	}
 
-	showsSpotifyAPI, err := c.api.ShowGetAll(ctx, user, utils.SliceMap(showsDB, func(s *model.Show) string { return s.SpotifyID }))
+	showsSpotifyAPI, err := spotifyapi.C.ShowGetAll(ctx, user, utils.SliceMap(showsDB, func(s *model.Show) string { return s.SpotifyID }))
 	if err != nil {
 		return err
 	}
-	showsSpotify := utils.SliceMap(showsSpotifyAPI, func(s api.Show) model.Show { return s.ToModel() })
+	showsSpotify := utils.SliceMap(showsSpotifyAPI, func(s spotifyapi.Show) model.Show { return s.ToModel() })
 
 	for i := range showsSpotify {
 		showDB, ok := utils.SliceFind(showsDB, func(s *model.Show) bool { return s.Equal(showsSpotify[i]) })

@@ -1,4 +1,4 @@
-package api
+package spotifyapi
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/topvennie/sortifyr/internal/database/model"
 )
 
-func (c *Client) ShowGet(ctx context.Context, user model.User, spotifyID string) (Show, error) {
+func (c *client) ShowGet(ctx context.Context, user model.User, spotifyID string) (Show, error) {
 	var resp Show
 
 	if err := c.request(ctx, user, http.MethodGet, "shows/"+spotifyID, http.NoBody, &resp); err != nil {
@@ -24,7 +24,7 @@ type showUserResponse struct {
 	Items []Show `json:"items"`
 }
 
-func (c *Client) ShowGetUser(ctx context.Context, user model.User) ([]Show, error) {
+func (c *client) ShowGetUser(ctx context.Context, user model.User) ([]Show, error) {
 	shows := make([]Show, 0)
 
 	total := 51
@@ -48,7 +48,7 @@ type showAllResponse struct {
 	Shows []Show `json:"shows"`
 }
 
-func (c *Client) ShowGetAll(ctx context.Context, user model.User, showsIDs []string) ([]Show, error) {
+func (c *client) ShowGetAll(ctx context.Context, user model.User, showsIDs []string) ([]Show, error) {
 	shows := make([]Show, 0, len(showsIDs))
 
 	limit := 50
