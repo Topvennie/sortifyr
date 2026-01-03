@@ -109,7 +109,9 @@ type Generator struct {
 	PlaylistID  pgtype.Int4
 	Maintained  bool
 	Interval    pgtype.Int4
+	Outdated    bool
 	Parameters  []byte
+	UpdatedAt   pgtype.Timestamptz
 }
 
 type History struct {

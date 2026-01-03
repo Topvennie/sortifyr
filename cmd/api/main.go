@@ -7,7 +7,8 @@ import (
 	"github.com/topvennie/sortifyr/internal/generator"
 	"github.com/topvennie/sortifyr/internal/server"
 	"github.com/topvennie/sortifyr/internal/server/service"
-	"github.com/topvennie/sortifyr/internal/spotify"
+	"github.com/topvennie/sortifyr/internal/spotifyapi"
+	"github.com/topvennie/sortifyr/internal/spotifysync"
 	"github.com/topvennie/sortifyr/internal/task"
 	"github.com/topvennie/sortifyr/pkg/config"
 	"github.com/topvennie/sortifyr/pkg/db"
@@ -49,11 +50,17 @@ func main() {
 		zap.S().Fatalf("Failed to init the task package %v", err)
 	}
 
-	if err := spotify.Init(*repo); err != nil {
-		zap.S().Fatalf("Failed to init the spotify package %v", err)
+	if err := spotifyapi.Init(); err != nil {
+		zap.S().Fatalf("Failed to init the spotify api package %v", err)
 	}
 
-	generator.Init(*repo)
+	if err := spotifysync.Init(*repo); err != nil {
+		zap.S().Fatalf("Failed to init the spotify sync package %v", err)
+	}
+
+	if err := generator.Init(*repo); err != nil {
+		zap.S().Fatalf("Failed to init the generator package %v", err)
+	}
 
 	api := server.New(*service, db.Pool())
 

@@ -12,8 +12,8 @@ import (
 )
 
 const generatorCreate = `-- name: GeneratorCreate :one
-INSERT INTO generators (user_id, name, description, playlist_id, maintained, interval, parameters)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO generators (user_id, name, description, playlist_id, maintained, interval, outdated, parameters, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
 RETURNING id
 `
 
@@ -24,6 +24,7 @@ type GeneratorCreateParams struct {
 	PlaylistID  pgtype.Int4
 	Maintained  bool
 	Interval    pgtype.Int4
+	Outdated    bool
 	Parameters  []byte
 }
 
@@ -35,11 +36,73 @@ func (q *Queries) GeneratorCreate(ctx context.Context, arg GeneratorCreateParams
 		arg.PlaylistID,
 		arg.Maintained,
 		arg.Interval,
+		arg.Outdated,
 		arg.Parameters,
 	)
 	var id int32
 	err := row.Scan(&id)
 	return id, err
+}
+
+const generatorGet = `-- name: GeneratorGet :one
+SELECT id, user_id, name, description, playlist_id, maintained, interval, outdated, parameters, updated_at
+FROM generators
+WHERE id = $1
+`
+
+func (q *Queries) GeneratorGet(ctx context.Context, id int32) (Generator, error) {
+	row := q.db.QueryRow(ctx, generatorGet, id)
+	var i Generator
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Name,
+		&i.Description,
+		&i.PlaylistID,
+		&i.Maintained,
+		&i.Interval,
+		&i.Outdated,
+		&i.Parameters,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const generatorGetByUser = `-- name: GeneratorGetByUser :many
+SELECT id, user_id, name, description, playlist_id, maintained, interval, outdated, parameters, updated_at
+FROM generators
+WHERE user_id = $1
+`
+
+func (q *Queries) GeneratorGetByUser(ctx context.Context, userID int32) ([]Generator, error) {
+	rows, err := q.db.Query(ctx, generatorGetByUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Generator
+	for rows.Next() {
+		var i Generator
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Name,
+			&i.Description,
+			&i.PlaylistID,
+			&i.Maintained,
+			&i.Interval,
+			&i.Outdated,
+			&i.Parameters,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const generatorUpdate = `-- name: GeneratorUpdate :exec
@@ -50,7 +113,9 @@ SET
   playlist_id = coalesce($4, playlist_id),
   maintained = coalesce($5, maintained),
   interval = coalesce($6, interval),
-  parameters = coalesce($7, parameters)
+  outdated = coalesce($7, outdated),
+  parameters = coalesce($8, parameters),
+  updated_at = NOW()
 WHERE id = $1
 `
 
@@ -61,6 +126,7 @@ type GeneratorUpdateParams struct {
 	PlaylistID  pgtype.Int4
 	Maintained  pgtype.Bool
 	Interval    pgtype.Int4
+	Outdated    pgtype.Bool
 	Parameters  []byte
 }
 
@@ -72,6 +138,7 @@ func (q *Queries) GeneratorUpdate(ctx context.Context, arg GeneratorUpdateParams
 		arg.PlaylistID,
 		arg.Maintained,
 		arg.Interval,
+		arg.Outdated,
 		arg.Parameters,
 	)
 	return err

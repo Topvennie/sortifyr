@@ -6,9 +6,11 @@ CREATE TABLE generators (
   name TEXT NOT NULL,
   description TEXT,
   playlist_id INTEGER REFERENCES playlists (id),
-  maintained BOOL NOT NULL,
+  maintained BOOLEAN NOT NULL,
   interval INTEGER,
+  outdated BOOLEAN NOT NULL,
   parameters JSONB,
+  updated_at TIMESTAMPTZ NOT NULL,
 
   CONSTRAINT generators_interval_required_if_maintained CHECK (
     maintained = false

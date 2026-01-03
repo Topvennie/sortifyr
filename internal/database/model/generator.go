@@ -59,12 +59,14 @@ type Generator struct {
 	PlaylistID  int
 	Maintained  bool
 	Interval    time.Duration
+	Outdated    bool
 	Params      GeneratorParams
+	UpdatedAt   time.Time
 }
 
 func GeneratorModel(g sqlc.Generator) *Generator {
 	params := GeneratorParams{}
-	_ = json.Unmarshal(g.Parameters, &params) //nolint:errcheck // Data controlled by us, it'll be fine
+	_ = json.Unmarshal(g.Parameters, &params) // nolint:errcheck // Data controlled by us, it'll be fine, ...right?
 
 	return &Generator{
 		ID:          int(g.ID),
@@ -74,6 +76,8 @@ func GeneratorModel(g sqlc.Generator) *Generator {
 		PlaylistID:  fromInt(g.PlaylistID),
 		Maintained:  g.Maintained,
 		Interval:    fromDuration(g.Interval),
+		Outdated:    g.Outdated,
 		Params:      params,
+		UpdatedAt:   g.UpdatedAt.Time,
 	}
 }

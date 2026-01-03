@@ -202,3 +202,7 @@ func (c *client) PlaylistCreate(ctx context.Context, user model.User, playlist *
 
 	return nil
 }
+
+func (c *client) PlaylistDelete(ctx context.Context, user model.User, spotifyID string) error {
+	return c.request(ctx, user, http.MethodDelete, fmt.Sprintf("/playlists/%s/followers", spotifyID), http.NoBody, noResp)
+}

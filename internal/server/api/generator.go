@@ -27,7 +27,7 @@ func (g *Generator) createRoutes() {
 	g.router.Get("/", g.getAll)
 	g.router.Post("/preview", g.preview)
 	g.router.Put("/", g.create)
-	g.router.Post("/:id", g.edit)
+	g.router.Post("/:id", g.update)
 }
 
 func (g *Generator) getAll(c *fiber.Ctx) error {
@@ -72,7 +72,7 @@ func (g *Generator) create(c *fiber.Ctx) error {
 		return fiber.ErrUnauthorized
 	}
 
-	var generator dto.Generator
+	var generator dto.GeneratorSave
 	if err := c.BodyParser(&generator); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
@@ -81,15 +81,15 @@ func (g *Generator) create(c *fiber.Ctx) error {
 	}
 	generator.ID = 0
 
-	generator, err := g.generator.Create(c.Context(), userID, generator)
+	newGen, err := g.generator.Create(c.Context(), userID, generator)
 	if err != nil {
 		return err
 	}
 
-	return c.JSON(generator)
+	return c.JSON(newGen)
 }
 
-func (g *Generator) edit(c *fiber.Ctx) error {
+func (g *Generator) update(c *fiber.Ctx) error {
 	userID, ok := c.Locals("userID").(int)
 	if !ok {
 		return fiber.ErrUnauthorized
@@ -100,7 +100,7 @@ func (g *Generator) edit(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	var generator dto.Generator
+	var generator dto.GeneratorSave
 	if err := c.BodyParser(&generator); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
@@ -109,10 +109,10 @@ func (g *Generator) edit(c *fiber.Ctx) error {
 	}
 	generator.ID = id
 
-	generator, err = g.generator.Edit(c.Context(), userID, generator)
+	newGen, err := g.generator.Update(c.Context(), userID, generator)
 	if err != nil {
 		return err
 	}
 
-	return c.JSON(generator)
+	return c.JSON(newGen)
 }

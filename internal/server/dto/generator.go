@@ -161,10 +161,12 @@ type Generator struct {
 	ID          int             `json:"id"`
 	Name        string          `json:"name" validate:"required"`
 	Description string          `json:"description,omitzero"`
-	Playlist    bool            `json:"playlist"`
+	PlaylistID  int             `json:"playlist_id"`
 	Maintained  bool            `json:"maintained"`
 	IntervalS   time.Duration   `json:"interval_s"`
+	Outdated    bool            `json:"outdated"`
 	Params      GeneratorParams `json:"params" validate:"required"`
+	UpdatedAt   time.Time       `json:"updated_at"`
 }
 
 func GeneratorDTO(gen *model.Generator) Generator {
@@ -172,14 +174,26 @@ func GeneratorDTO(gen *model.Generator) Generator {
 		ID:          gen.ID,
 		Name:        gen.Name,
 		Description: gen.Description,
-		Playlist:    gen.PlaylistID != 0,
+		PlaylistID:  gen.PlaylistID,
 		Maintained:  gen.Maintained,
 		IntervalS:   gen.Interval / time.Second,
+		Outdated:    gen.Outdated,
 		Params:      generatorParamsDTO(gen.Params),
+		UpdatedAt:   gen.UpdatedAt,
 	}
 }
 
-func (g Generator) ToModel(userID int) *model.Generator {
+type GeneratorSave struct {
+	ID             int             `json:"id"`
+	Name           string          `json:"name" validate:"required"`
+	Description    string          `json:"description,omitzero"`
+	CreatePlaylist bool            `json:"create_playlist"`
+	Maintained     bool            `json:"maintained"`
+	IntervalS      time.Duration   `json:"interval_s"`
+	Params         GeneratorParams `json:"params" validate:"required"`
+}
+
+func (g GeneratorSave) ToModel(userID int) *model.Generator {
 	return &model.Generator{
 		ID:          g.ID,
 		UserID:      userID,

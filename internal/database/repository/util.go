@@ -26,3 +26,7 @@ func toBool(b *bool) pgtype.Bool {
 func toTime(t time.Time) pgtype.Timestamptz {
 	return pgtype.Timestamptz{Time: t, Valid: !t.IsZero()}
 }
+
+func toDuration(d time.Duration) pgtype.Int4 {
+	return pgtype.Int4{Int32: int32(d.Nanoseconds()), Valid: d.Nanoseconds() > 0}
+}
