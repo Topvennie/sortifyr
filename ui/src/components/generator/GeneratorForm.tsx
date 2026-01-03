@@ -8,8 +8,7 @@ import { Step, Stepper } from "../molecules/Stepper";
 import { GeneratorFormPreset } from "./GeneratorFormPreset";
 import { GeneratorFormTrack } from "./GeneratorFormTrack";
 import { Stack } from "@mantine/core";
-
-const maxSteps = 3
+import { GeneratorFormFinalize } from "./GeneratorFormFinalize";
 
 const steps: Step[] = [
   {
@@ -67,7 +66,7 @@ export const GeneratorForm = () => {
   })
 
   const handleNextStep = () => {
-    if (active < maxSteps - 1) {
+    if (active < steps.length - 1) {
       setActive(prev => prev + 1)
       return
     }
@@ -82,21 +81,23 @@ export const GeneratorForm = () => {
     setActive(prev => prev - 1)
   }
 
-  const stepComponent = useMemo(() => {
+  const stepComponent = () => {
     switch (active) {
       case 0:
         return <GeneratorFormPreset form={form} nextStep={handleNextStep} prevStep={handlePrevStep} />
       case 1:
         return <GeneratorFormTrack form={form} nextStep={handleNextStep} prevStep={handlePrevStep} />
+      case 2:
+        return <GeneratorFormFinalize form={form} nextStep={handleNextStep} prevStep={handlePrevStep} />
       default:
         return null
     }
-  }, [active])
+  }
 
   return (
     <Stack className="flex-1 rounded-xl overflow-auto">
       <Stepper steps={steps} activeStep={active} />
-      {stepComponent}
+      {stepComponent()}
     </Stack>
   )
 }

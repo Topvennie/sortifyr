@@ -54,14 +54,14 @@ export const GeneratorFormPreset = ({ form, nextStep, prevStep }: Props) => {
   // TODO: next give arwning if the preview is not the same as the generator
 
   return (
-    <div className="flex-1 flex flex-col md:flex-row gap-4 md:overflow-hidden">
-      <Section className="flex-none md:w-[60%]">
-        <SectionTitle
-          title="Preset & Parameters"
-          description="Pick a starting point and then fine tune the filters."
-        />
+    <>
+      <div className="flex-1 flex flex-col md:flex-row gap-4 md:overflow-hidden">
+        <Section className="flex-none md:w-[60%]">
+          <SectionTitle
+            title="Preset & Parameters"
+            description="Pick a starting point and then fine tune the filters."
+          />
 
-        <Stack gap="xs">
           <p className="text-muted">Preset</p>
           <Group>
             {Object.values(GeneratorPreset).map(p => (
@@ -69,44 +69,41 @@ export const GeneratorFormPreset = ({ form, nextStep, prevStep }: Props) => {
             ))}
           </Group>
           {presetArguments}
-        </Stack>
 
-        <Stack gap="xs">
           <p className="text-muted">General parameters</p>
           <Group>
             <NumberInput label="Maximum Tracks" allowNegative={false} {...form.getInputProps("params.trackAmount")} />
           </Group>
-        </Stack>
 
-        <Stack gap="xs">
           <p className="text-muted">Select playlists</p>
           <Playlists form={form} />
-        </Stack>
-      </Section>
+        </Section>
 
-      <Section>
-        <Group justify="space-between">
-          <SectionTitle
-            title="Preview Tracks"
-            description="Adjust parameters and then refresh to update the preview."
+        <Section>
+          <Group justify="space-between">
+            <SectionTitle
+              title="Preview Tracks"
+              description="Adjust parameters and then refresh to update the preview."
+            />
+            <Button onClick={handleRefetchTracks} color="secondary.1" loading={isPending}>Refresh</Button>
+          </Group>
+
+          <Table
+            columns={[
+              { accessor: "name" },
+            ]}
+            records={tracks ?? []}
+            noRecordsText="No tracks fit the parameters"
+            fetching={isPending}
           />
-          <Button onClick={handleRefetchTracks} color="secondary.1" loading={isPending}>Refresh</Button>
-        </Group>
+        </Section>
+      </div>
 
-        <Table
-          columns={[
-            { accessor: "name" },
-          ]}
-          records={tracks ?? []}
-          noRecordsText="No tracks fit the parameters"
-          fetching={isPending}
-        />
-        <Group justify="end">
-          <Button onClick={prevStep} color="gray">Cancel</Button>
-          <Button onClick={nextStep}>Next: Tracks</Button>
-        </Group>
-      </Section>
-    </div>
+      <Group justify="end">
+        <Button onClick={prevStep} color="gray">Cancel</Button>
+        <Button onClick={nextStep}>Next: Tracks</Button>
+      </Group>
+    </>
   )
 }
 

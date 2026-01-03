@@ -49,60 +49,62 @@ export const GeneratorFormTrack = ({ form, nextStep, prevStep }: Props) => {
   }
 
   return (
-    <div className="flex-1 flex flex-col md:flex-row gap-4 md:overflow-hidden">
-      <Section className="flex-none md:w-[60%]">
-        <Group justify="space-between">
-          <SectionTitle
-            title="Generated Tracks"
-            description={`Exclude tracks from the playlist.\nRefresh to replace them with new tracks.`}
+    <>
+      <div className="flex-1 flex flex-col md:flex-row gap-4 md:overflow-hidden">
+        <Section className="flex-none md:w-[60%]">
+          <Group justify="space-between">
+            <SectionTitle
+              title="Generated Tracks"
+              description={`Exclude tracks from the playlist.\nRefresh to replace them with new tracks.`}
+            />
+            <Button onClick={handleRefetchTracks} color="secondary.1">Refresh</Button>
+          </Group>
+
+          <Table
+            columns={[
+              { accessor: "name", width: "100%" },
+              {
+                accessor: "actions",
+                title: "",
+                textAlign: "right",
+                render: track => <ActionIcon onClick={() => handleExcludeTrack(track)} variant="subtle" color="red"><LuTrash2 /></ActionIcon>
+              },
+            ]}
+            records={tracks ?? []}
+            noRecordsText="No tracks fit the parameters"
+            fetching={isPending || isLoading}
+            animate={false}
           />
-          <Button onClick={handleRefetchTracks} color="secondary.1">Refresh</Button>
-        </Group>
+        </Section>
 
-        <Table
-          columns={[
-            { accessor: "name", width: "100%" },
-            {
-              accessor: "actions",
-              title: "",
-              textAlign: "right",
-              render: track => <ActionIcon onClick={() => handleExcludeTrack(track)} variant="subtle" color="red"><LuTrash2 /></ActionIcon>
-            },
-          ]}
-          records={tracks ?? []}
-          noRecordsText="No tracks fit the parameters"
-          fetching={isPending || isLoading}
-          animate={false}
-        />
+        <Section>
+          <SectionTitle
+            title="Excluded Tracks"
+            description={`Readd tracks back to the playlist.\nRefresh to remove any excess tracks.`}
+          />
 
-        <Group justify="end">
-          <Button onClick={prevStep} color="gray">Back</Button>
-          <Button onClick={nextStep}>Next: Finalize</Button>
-        </Group>
-      </Section>
+          <Table
+            columns={[
+              { accessor: "name" },
+              {
+                accessor: "actions",
+                title: "",
+                textAlign: "right",
+                render: track => <ActionIcon onClick={() => handleIncludeTrack(track)} variant="subtle" color="black"><LuUndo2 /></ActionIcon>
+              },
+            ]}
+            records={excludedTracks ?? []}
+            noRecordsText="No excluded tracks"
+            fetching={isPending || isLoading}
+            animate={false}
+          />
+        </Section>
+      </div>
 
-      <Section>
-        <SectionTitle
-          title="Excluded Tracks"
-          description={`Readd tracks back to the playlist.\nRefresh to remove any excess tracks.`}
-        />
-
-        <Table
-          columns={[
-            { accessor: "name" },
-            {
-              accessor: "actions",
-              title: "",
-              textAlign: "right",
-              render: track => <ActionIcon onClick={() => handleIncludeTrack(track)} variant="subtle" color="black"><LuUndo2 /></ActionIcon>
-            },
-          ]}
-          records={excludedTracks ?? []}
-          noRecordsText="No excluded tracks"
-          fetching={isPending || isLoading}
-          animate={false}
-        />
-      </Section>
-    </div>
+      <Group justify="end">
+        <Button onClick={prevStep} color="gray">Back</Button>
+        <Button onClick={nextStep}>Next: Finalize</Button>
+      </Group>
+    </>
   )
 }
