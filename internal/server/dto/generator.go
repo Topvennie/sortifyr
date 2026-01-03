@@ -13,7 +13,7 @@ type GeneratorWindow struct {
 	BurstIntervalS time.Duration `json:"burst_interval_s"`
 }
 
-func GeneratorWindowDTO(g model.GeneratorWindow) GeneratorWindow {
+func generatorWindowDTO(g model.GeneratorWindow) GeneratorWindow {
 	return GeneratorWindow{
 		Start:          g.Start,
 		End:            g.End,
@@ -33,11 +33,27 @@ func (g GeneratorWindow) ToModel() *model.GeneratorWindow {
 
 type GeneratorPresetCustomParams struct{}
 
+func generatorPresetCustomParamsDTO(params *model.GeneratorPresetCustomParams) *GeneratorPresetCustomParams {
+	if params == nil {
+		return nil
+	}
+
+	return &GeneratorPresetCustomParams{}
+}
+
 func (g GeneratorPresetCustomParams) ToModel() *model.GeneratorPresetCustomParams {
 	return &model.GeneratorPresetCustomParams{}
 }
 
 type GeneratorPresetForgottenParams struct{}
+
+func generatorPresetForgottenParamsDTO(params *model.GeneratorPresetForgottenParams) *GeneratorPresetForgottenParams {
+	if params == nil {
+		return nil
+	}
+
+	return &GeneratorPresetForgottenParams{}
+}
 
 func (g GeneratorPresetForgottenParams) ToModel() *model.GeneratorPresetForgottenParams {
 	return &model.GeneratorPresetForgottenParams{}
@@ -45,6 +61,16 @@ func (g GeneratorPresetForgottenParams) ToModel() *model.GeneratorPresetForgotte
 
 type GeneratorPresetTopParams struct {
 	Window GeneratorWindow `json:"window"`
+}
+
+func generatorPresetTopParamsDTO(params *model.GeneratorPresetTopParams) *GeneratorPresetTopParams {
+	if params == nil {
+		return nil
+	}
+
+	return &GeneratorPresetTopParams{
+		Window: generatorWindowDTO(params.Window),
+	}
 }
 
 func (g GeneratorPresetTopParams) ToModel() *model.GeneratorPresetTopParams {
@@ -56,6 +82,17 @@ func (g GeneratorPresetTopParams) ToModel() *model.GeneratorPresetTopParams {
 type GeneratorPresetOldTopParams struct {
 	PeakWindow   GeneratorWindow `json:"peak_window"`
 	RecentWindow GeneratorWindow `json:"recent_window"`
+}
+
+func generatorPresetOldTopParamsDTO(params *model.GeneratorPresetOldTopParams) *GeneratorPresetOldTopParams {
+	if params == nil {
+		return nil
+	}
+
+	return &GeneratorPresetOldTopParams{
+		PeakWindow:   generatorWindowDTO(params.PeakWindow),
+		RecentWindow: generatorWindowDTO(params.RecentWindow),
+	}
 }
 
 func (g GeneratorPresetOldTopParams) ToModel() *model.GeneratorPresetOldTopParams {
@@ -76,6 +113,19 @@ type GeneratorParams struct {
 	ParamsForgotten *GeneratorPresetForgottenParams `json:"params_forgotten,omitzero"`
 	ParamsTop       *GeneratorPresetTopParams       `json:"params_top,omitzero"`
 	ParamsOldTop    *GeneratorPresetOldTopParams    `json:"params_old_top,omitzero"`
+}
+
+func generatorParamsDTO(params model.GeneratorParams) GeneratorParams {
+	return GeneratorParams{
+		TrackAmount:         params.TrackAmount,
+		ExcludedPlaylistIDs: params.ExcludedPlaylistIDs,
+		ExcludedTrackIDs:    params.ExcludedTrackIDs,
+		Preset:              params.Preset,
+		ParamsCustom:        generatorPresetCustomParamsDTO(params.ParamsCustom),
+		ParamsForgotten:     generatorPresetForgottenParamsDTO(params.ParamsForgotten),
+		ParamsTop:           generatorPresetTopParamsDTO(params.ParamsTop),
+		ParamsOldTop:        generatorPresetOldTopParamsDTO(params.ParamsOldTop),
+	}
 }
 
 func (g GeneratorParams) ToModel() model.GeneratorParams {
@@ -112,6 +162,15 @@ type Generator struct {
 	Name        string          `json:"name" validate:"required"`
 	Description string          `json:"description,omitzero"`
 	Params      GeneratorParams `json:"params" validate:"required"`
+}
+
+func GeneratorDTO(gen *model.Generator) Generator {
+	return Generator{
+		ID:          gen.ID,
+		Name:        gen.Name,
+		Description: gen.Description,
+		Params:      generatorParamsDTO(gen.Params),
+	}
 }
 
 func (g Generator) ToModel(userID int) *model.Generator {

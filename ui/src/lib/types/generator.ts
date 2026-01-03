@@ -75,6 +75,10 @@ export const convertGenerator = (g: API.Generator): Generator => {
   }
 }
 
+export const convertGenerators = (g: API.Generator[]): Generator[] => {
+  return g.map(convertGenerator)
+}
+
 export const convertGeneratorSchema = (g: Generator): GeneratorSchema => {
   return {
     ...g

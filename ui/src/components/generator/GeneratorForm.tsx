@@ -1,5 +1,5 @@
-import { GeneratorPreset, generatorSchema, GeneratorSchema } from "@/lib/types/generator";
-import { daysAgo } from "@/lib/utils";
+import { convertGeneratorSchema, Generator, GeneratorPreset, generatorSchema, GeneratorSchema } from "@/lib/types/generator";
+import { daysAgo, getErrorMessage } from "@/lib/utils";
 import { useForm } from "@mantine/form";
 import { useNavigate } from "@tanstack/react-router";
 import { zod4Resolver } from "mantine-form-zod-resolver";
@@ -9,26 +9,32 @@ import { GeneratorFormPreset } from "./GeneratorFormPreset";
 import { GeneratorFormTrack } from "./GeneratorFormTrack";
 import { Stack } from "@mantine/core";
 import { GeneratorFormFinalize } from "./GeneratorFormFinalize";
+import { useGeneratorCreate, useGeneratorEdit } from "@/lib/api/generator";
+import { notifications } from "@mantine/notifications";
+import { Confirm } from "../molecules/Confirm";
+import { useDisclosure } from "@mantine/hooks";
+
+type Props = {
+  generator?: Generator;
+}
 
 const steps: Step[] = [
-  {
-    title: "Preset & Parameters",
-  },
-  {
-    title: "Select Tracks",
-  },
-  {
-    title: "Finalize & Save",
-  }
+  { title: "Preset & Parameters" },
+  { title: "Select Tracks" },
+  { title: "Finalize & Save" }
 ]
 
-export const GeneratorForm = () => {
+export const GeneratorForm = ({ generator: initialGenerator }: Props) => {
   const [active, setActive] = useState(0)
+  const [opened, { open, close }] = useDisclosure()
+
+  const generatorCreate = useGeneratorCreate()
+  const generatorEdit = useGeneratorEdit()
 
   const navigate = useNavigate()
 
   const form = useForm<GeneratorSchema>({
-    initialValues: {
+    initialValues: initialGenerator ? convertGeneratorSchema(initialGenerator) : {
       name: "",
       description: undefined,
       params: {
@@ -65,11 +71,42 @@ export const GeneratorForm = () => {
     validate: zod4Resolver(generatorSchema),
   })
 
+  const handleSubmit = () => {
+    if (form.validate().hasErrors) {
+      notifications.show({ color: "red", message: "Some parameters are invalid" })
+      console.error(form.errors)
+      return
+    }
+
+    const update = !!initialGenerator
+
+    let action
+    if (update) action = generatorEdit
+    else action = generatorCreate
+
+    action.mutateAsync(form.getValues(), {
+      onSuccess: () => notifications.show({ title: form.getValues().name, message: `Generator ${update ? "updated" : "created"}` }),
+      onError: async (error) => {
+        const msg = await getErrorMessage(error)
+        notifications.show({ color: "red", message: msg })
+      },
+      onSettled: () => close(),
+    })
+  }
+
   const handleNextStep = () => {
     if (active < steps.length - 1) {
       setActive(prev => prev + 1)
       return
     }
+
+    if (form.validate().hasErrors) {
+      notifications.show({ color: "red", message: "Some parameters are invalid" })
+      console.error(form.errors)
+      return
+    }
+
+    open()
   }
 
   const handlePrevStep = () => {
@@ -95,9 +132,19 @@ export const GeneratorForm = () => {
   }
 
   return (
-    <Stack className="flex-1 rounded-xl overflow-auto">
-      <Stepper steps={steps} activeStep={active} />
-      {stepComponent()}
-    </Stack>
+    <>
+      <Stack className="flex-1 rounded-xl overflow-auto">
+        <Stepper steps={steps} activeStep={active} />
+        {stepComponent()}
+      </Stack>
+      <Confirm
+        opened={opened}
+        onClose={close}
+        modalTitle="Generator"
+        title="Save Generator"
+        description="Are you sure you want to save the generator?"
+        onConfirm={handleSubmit}
+      />
+    </>
   )
 }

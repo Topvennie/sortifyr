@@ -29,6 +29,7 @@ export const GeneratorFormPreset = ({ form, nextStep, prevStep }: Props) => {
   const handleRefetchTracks = () => {
     if (form.validateField("params").hasError) {
       notifications.show({ color: "red", message: "Some parameters are invalid" })
+      console.error(form.errors)
       return
     }
 
