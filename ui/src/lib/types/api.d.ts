@@ -99,6 +99,9 @@ export namespace API {
   export interface Generator extends Base {
     name: string;
     description?: string;
+    playlist: boolean;
+    maintained: boolean;
+    interval_s: number;
     params: {
       track_amount: number;
       excluded_playlist_ids?: number[];

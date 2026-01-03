@@ -12,8 +12,8 @@ import (
 )
 
 const generatorCreate = `-- name: GeneratorCreate :one
-INSERT INTO generators (user_id, name, description, playlist_id, maintained, parameters)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO generators (user_id, name, description, playlist_id, maintained, interval, parameters)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING id
 `
 
@@ -23,6 +23,7 @@ type GeneratorCreateParams struct {
 	Description pgtype.Text
 	PlaylistID  pgtype.Int4
 	Maintained  bool
+	Interval    pgtype.Int4
 	Parameters  []byte
 }
 
@@ -33,6 +34,7 @@ func (q *Queries) GeneratorCreate(ctx context.Context, arg GeneratorCreateParams
 		arg.Description,
 		arg.PlaylistID,
 		arg.Maintained,
+		arg.Interval,
 		arg.Parameters,
 	)
 	var id int32
@@ -47,7 +49,8 @@ SET
   description = coalesce($3, description),
   playlist_id = coalesce($4, playlist_id),
   maintained = coalesce($5, maintained),
-  parameters = coalesce($6, parameters)
+  interval = coalesce($6, interval),
+  parameters = coalesce($7, parameters)
 WHERE id = $1
 `
 
@@ -57,6 +60,7 @@ type GeneratorUpdateParams struct {
 	Description pgtype.Text
 	PlaylistID  pgtype.Int4
 	Maintained  pgtype.Bool
+	Interval    pgtype.Int4
 	Parameters  []byte
 }
 
@@ -67,6 +71,7 @@ func (q *Queries) GeneratorUpdate(ctx context.Context, arg GeneratorUpdateParams
 		arg.Description,
 		arg.PlaylistID,
 		arg.Maintained,
+		arg.Interval,
 		arg.Parameters,
 	)
 	return err

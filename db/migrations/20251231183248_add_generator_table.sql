@@ -7,7 +7,13 @@ CREATE TABLE generators (
   description TEXT,
   playlist_id INTEGER REFERENCES playlists (id),
   maintained BOOL NOT NULL,
-  parameters JSONB
+  interval INTEGER,
+  parameters JSONB,
+
+  CONSTRAINT generators_interval_required_if_maintained CHECK (
+    maintained = false
+    OR interval IS NOT NULL
+  )
 );
 -- +goose StatementEnd
 

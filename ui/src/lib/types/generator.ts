@@ -35,6 +35,9 @@ export interface Generator {
   id: number;
   name: string;
   description?: string;
+  playlist: boolean;
+  maintained: boolean;
+  intervalS: number;
   params: {
     trackAmount: number;
     excludedPlaylistIds: number[];
@@ -57,6 +60,9 @@ export const convertGenerator = (g: API.Generator): Generator => {
     id: g.id,
     name: g.name,
     description: g.description,
+    playlist: g.playlist,
+    maintained: g.maintained,
+    intervalS: g.interval_s,
     params: {
       trackAmount: g.params.track_amount,
       excludedPlaylistIds: g.params.excluded_playlist_ids ?? [],
@@ -97,6 +103,9 @@ export const generatorSchema = z.object({
   id: z.number().positive().optional(),
   name: z.string().nonempty(),
   description: z.string().optional(),
+  playlist: z.boolean(),
+  maintained: z.boolean(),
+  intervalS: z.number().positive(),
   params: z.object({
     trackAmount: z.number().positive(),
     excludedPlaylistIds: z.array(z.number().positive()).optional(),

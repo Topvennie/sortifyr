@@ -22,12 +22,12 @@ func Init(repo repository.Repository) {
 	}
 }
 
-func (g *generator) Create(ctx context.Context, gen model.Generator) error {
+func (g *generator) Create(ctx context.Context, gen model.Generator, playlist bool) error {
 	// TODO: Implement
 	return nil
 }
 
-func (g *generator) Edit(ctx context.Context, gen model.Generator) error {
+func (g *generator) Edit(ctx context.Context, gen model.Generator, playlist bool) error {
 	// TODO: IMplement
 	return nil
 }

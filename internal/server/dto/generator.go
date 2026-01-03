@@ -18,7 +18,7 @@ func generatorWindowDTO(g model.GeneratorWindow) GeneratorWindow {
 		Start:          g.Start,
 		End:            g.End,
 		MinPlays:       g.MinPlays,
-		BurstIntervalS: g.BurstInterval / 1000000,
+		BurstIntervalS: g.BurstInterval / time.Second,
 	}
 }
 
@@ -161,6 +161,9 @@ type Generator struct {
 	ID          int             `json:"id"`
 	Name        string          `json:"name" validate:"required"`
 	Description string          `json:"description,omitzero"`
+	Playlist    bool            `json:"playlist"`
+	Maintained  bool            `json:"maintained"`
+	IntervalS   time.Duration   `json:"interval_s"`
 	Params      GeneratorParams `json:"params" validate:"required"`
 }
 
@@ -169,6 +172,9 @@ func GeneratorDTO(gen *model.Generator) Generator {
 		ID:          gen.ID,
 		Name:        gen.Name,
 		Description: gen.Description,
+		Playlist:    gen.PlaylistID != 0,
+		Maintained:  gen.Maintained,
+		IntervalS:   gen.Interval / time.Second,
 		Params:      generatorParamsDTO(gen.Params),
 	}
 }
@@ -179,6 +185,8 @@ func (g Generator) ToModel(userID int) *model.Generator {
 		UserID:      userID,
 		Name:        g.Name,
 		Description: g.Description,
+		Maintained:  g.Maintained,
+		Interval:    g.IntervalS * time.Second,
 		Params:      g.Params.ToModel(),
 	}
 }

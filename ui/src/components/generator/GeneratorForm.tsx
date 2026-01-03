@@ -1,18 +1,18 @@
+import { useGeneratorCreate, useGeneratorEdit } from "@/lib/api/generator";
 import { convertGeneratorSchema, Generator, GeneratorPreset, generatorSchema, GeneratorSchema } from "@/lib/types/generator";
 import { daysAgo, getErrorMessage } from "@/lib/utils";
+import { Stack } from "@mantine/core";
 import { useForm } from "@mantine/form";
+import { useDisclosure } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
 import { useNavigate } from "@tanstack/react-router";
 import { zod4Resolver } from "mantine-form-zod-resolver";
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { Confirm } from "../molecules/Confirm";
 import { Step, Stepper } from "../molecules/Stepper";
+import { GeneratorFormFinalize } from "./GeneratorFormFinalize";
 import { GeneratorFormPreset } from "./GeneratorFormPreset";
 import { GeneratorFormTrack } from "./GeneratorFormTrack";
-import { Stack } from "@mantine/core";
-import { GeneratorFormFinalize } from "./GeneratorFormFinalize";
-import { useGeneratorCreate, useGeneratorEdit } from "@/lib/api/generator";
-import { notifications } from "@mantine/notifications";
-import { Confirm } from "../molecules/Confirm";
-import { useDisclosure } from "@mantine/hooks";
 
 type Props = {
   generator?: Generator;
@@ -37,6 +37,9 @@ export const GeneratorForm = ({ generator: initialGenerator }: Props) => {
     initialValues: initialGenerator ? convertGeneratorSchema(initialGenerator) : {
       name: "",
       description: undefined,
+      playlist: false,
+      maintained: false,
+      intervalS: 0,
       params: {
         trackAmount: 50,
         excludedPlaylistIds: undefined,
@@ -85,7 +88,10 @@ export const GeneratorForm = ({ generator: initialGenerator }: Props) => {
     else action = generatorCreate
 
     action.mutateAsync(form.getValues(), {
-      onSuccess: () => notifications.show({ title: form.getValues().name, message: `Generator ${update ? "updated" : "created"}` }),
+      onSuccess: () => {
+        notifications.show({ title: form.getValues().name, message: `Generator ${update ? "updated" : "created"}` })
+        navigate({ to: "/generator" })
+      },
       onError: async (error) => {
         const msg = await getErrorMessage(error)
         notifications.show({ color: "red", message: msg })

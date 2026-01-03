@@ -58,6 +58,7 @@ type Generator struct {
 	Description string
 	PlaylistID  int
 	Maintained  bool
+	Interval    time.Duration
 	Params      GeneratorParams
 }
 
@@ -72,6 +73,7 @@ func GeneratorModel(g sqlc.Generator) *Generator {
 		Description: fromString(g.Description),
 		PlaylistID:  fromInt(g.PlaylistID),
 		Maintained:  g.Maintained,
+		Interval:    fromDuration(g.Interval),
 		Params:      params,
 	}
 }

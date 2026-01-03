@@ -39,7 +39,14 @@ func (g *Generator) Preview(ctx context.Context, userID int, params dto.Generato
 func (g *Generator) Create(ctx context.Context, userID int, genSave dto.Generator) (dto.Generator, error) {
 	gen := genSave.ToModel(userID)
 
-	if err := generator.G.Create(ctx, *gen); err != nil {
+	if !genSave.Playlist {
+		gen.Maintained = false
+	}
+	if !genSave.Maintained {
+		gen.Interval = 0
+	}
+
+	if err := generator.G.Create(ctx, *gen, genSave.Playlist); err != nil {
 		zap.S().Error(err)
 		return dto.Generator{}, fiber.ErrInternalServerError
 	}
@@ -50,7 +57,14 @@ func (g *Generator) Create(ctx context.Context, userID int, genSave dto.Generato
 func (g *Generator) Edit(ctx context.Context, userID int, genSave dto.Generator) (dto.Generator, error) {
 	gen := genSave.ToModel(userID)
 
-	if err := generator.G.Edit(ctx, *gen); err != nil {
+	if !genSave.Playlist {
+		gen.Maintained = false
+	}
+	if !genSave.Maintained {
+		gen.Interval = 0
+	}
+
+	if err := generator.G.Edit(ctx, *gen, genSave.Playlist); err != nil {
 		zap.S().Error(err)
 		return dto.Generator{}, fiber.ErrInternalServerError
 	}
