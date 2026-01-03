@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	IntervalOnce  = time.Duration(0)
-	ErrTaskExists = errors.New("task already exists")
+	IntervalOnce     = time.Duration(0)
+	ErrTaskExists    = errors.New("task already exists")
+	ErrTaskNotExists = errors.New("task doesn't exist")
 )
 
 // Init intializes the global task manager instance

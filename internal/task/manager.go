@@ -152,6 +152,38 @@ func (m *manager) Add(ctx context.Context, newTask Task) error {
 	return nil
 }
 
+// Remove removes a task from the manager
+// Running tasks will not be cancelled but removed after execution
+func (m *manager) Remove(ctx context.Context, taskUID string) error {
+	if _, ok := m.jobs[taskUID]; !ok {
+		return ErrTaskNotExists
+	}
+
+	// Update db
+	task, err := m.repoTask.GetByUID(ctx, taskUID)
+	if err != nil {
+		return err
+	}
+	if task == nil {
+		return ErrTaskNotExists
+	}
+	task.Active = false
+	if err := m.repoTask.Update(ctx, *task); err != nil {
+		return err
+	}
+
+	// Remove from scheduler
+	m.scheduler.RemoveByTags(taskUID)
+
+	// Remove from internal job list
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	delete(m.jobs, taskUID)
+
+	return nil
+}
+
 // RunRecurringByUID runs a pre existing recurring task given a task UID.
 func (m *manager) RunRecurringByUID(taskUID string, user model.User) error {
 	var job gocron.Job
@@ -162,7 +194,7 @@ func (m *manager) RunRecurringByUID(taskUID string, user model.User) error {
 		}
 	}
 	if job == nil {
-		return fmt.Errorf("task with uid %s not found", taskUID)
+		return ErrTaskNotExists
 	}
 
 	// Set the user argument
