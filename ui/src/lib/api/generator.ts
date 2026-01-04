@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { convertGenerators, Generator, GeneratorSchema } from "../types/generator"
 import { convertTracks } from "../types/track"
-import { apiGet, apiPost, apiPut } from "./query"
+import { apiDelete, apiGet, apiPost, apiPut } from "./query"
 import { STALE_TIME } from "../types/staletime"
 
 const ENDPOINT = "generator"
@@ -45,6 +45,23 @@ export const useGeneratorEdit = () => {
 
   return useMutation({
     mutationFn: (generator: GeneratorSchema) => apiPost(`${ENDPOINT}/${generator.id}`, generator),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["generator"] }),
+  })
+}
+
+export const useGeneratorDelete = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (args: { generator: Pick<Generator, "id">, deletePlaylist?: boolean }) => {
+      const queryParams = new URLSearchParams()
+
+      if (args.deletePlaylist !== undefined) {
+        queryParams.append("delete_playlist", String(args.deletePlaylist))
+      }
+
+      return apiDelete(`${ENDPOINT}/${args.generator.id}?${queryParams.toString()}`)
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["generator"] }),
   })
 }

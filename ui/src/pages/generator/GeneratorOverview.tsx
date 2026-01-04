@@ -1,17 +1,25 @@
 import { LinkButton } from "@/components/atoms/LinkButton"
 import { Page, PageTitle, Section, SectionTitle } from "@/components/atoms/Page"
+import { Confirm } from "@/components/molecules/Confirm"
 import { Table } from "@/components/molecules/Table"
-import { useGeneratorGetAll, useGeneratorRefresh } from "@/lib/api/generator"
+import { useGeneratorDelete, useGeneratorGetAll, useGeneratorRefresh } from "@/lib/api/generator"
 import { Generator } from "@/lib/types/generator"
 import { getErrorMessage } from "@/lib/utils"
-import { ActionIcon, Badge, Group } from "@mantine/core"
+import { ActionIcon, Badge, Checkbox, Group, Stack } from "@mantine/core"
+import { useDisclosure } from "@mantine/hooks"
 import { notifications } from "@mantine/notifications"
 import { useNavigate } from "@tanstack/react-router"
+import { useState } from "react"
 import { LuCheck, LuListRestart, LuPencil, LuSparkles, LuTrash2 } from "react-icons/lu"
 
 export const GeneratorOverview = () => {
   const { data: generators, isLoading } = useGeneratorGetAll()
   const generatorRefresh = useGeneratorRefresh()
+  const generatorDelete = useGeneratorDelete()
+
+  const [generatorToDelete, setGeneratorToDelete] = useState<Generator | null>(null)
+  const [checkedPlaylist, setCheckedPlaylist] = useState(false)
+  const [opened, { open, close }] = useDisclosure()
 
   const navigate = useNavigate()
 
@@ -29,76 +37,112 @@ export const GeneratorOverview = () => {
     navigate({ to: "/generator/edit/$generatorId", params: { generatorId: gen.id.toString() } })
   }
 
+  const handleDeleteInit = (gen: Generator) => {
+    setGeneratorToDelete(gen)
+    setCheckedPlaylist(false)
+    open()
+  }
+
+  const handleDelete = () => {
+    if (!generatorToDelete) return
+
+    generatorDelete.mutateAsync({ generator: generatorToDelete, deletePlaylist: checkedPlaylist }, {
+      onSuccess: () => notifications.show({ message: "Generated deleted" }),
+      onError: async error => {
+        const msg = await getErrorMessage(error)
+        notifications.show({ color: "red", message: msg })
+      },
+      onSettled: () => close(),
+    })
+  }
+
+  // TODO: Disable refresh when the task is running
 
   return (
-    <Page>
-      <Group justify="space-between">
-        <PageTitle
-          title="Generate new playlists"
-          description="Create playlists from presets and fine-tune them before saving."
-        />
-        <LinkButton to={"/generator/create"} leftSection={<LuSparkles />} radius="lg">New Generator</LinkButton>
-      </Group>
+    <>
+      <Page>
+        <Group justify="space-between">
+          <PageTitle
+            title="Generate new playlists"
+            description="Create playlists from presets and fine-tune them before saving."
+          />
+          <LinkButton to={"/generator/create"} leftSection={<LuSparkles />} radius="lg">New Generator</LinkButton>
+        </Group>
 
-      <Section>
-        <SectionTitle
-          title="Generated playlists"
-        />
+        <Section>
+          <SectionTitle
+            title="Generated playlists"
+          />
 
-        <Table
-          columns={[
-            {
-              accessor: "name",
-              title: "Name & Description",
-              render: ({ name, description }) => (
-                <div>
-                  <p className="font-semibold">{name}</p>
-                  <p className="text-muted text-sm">{description}</p>
-                </div>
-              )
-            },
-            {
-              accessor: "playlist",
-              title: "Playlist",
-              textAlign: "right",
-              render: ({ playlistId }) => playlistId && <LuCheck className="ml-auto text-green-500 size-6" />,
-            },
-            {
-              accessor: "maintained",
-              title: "Maintained",
-              textAlign: "right",
-              render: ({ playlistId, maintained, intervalS }) => {
-                if (!playlistId) return null
-                const days = Math.floor(intervalS / (60 * 60 * 24))
-
-                return <Badge color={maintained ? "secondary.1" : "gray"} className="ml-auto">{maintained ? `Every${days !== 1 ? ' ' + days : ''} day${days !== 1 ? 's' : ''}` : "One off"}</Badge>
+          <Table
+            columns={[
+              {
+                accessor: "name",
+                title: "Name & Description",
+                render: ({ name, description }) => (
+                  <div>
+                    <p className="font-semibold">{name}</p>
+                    <p className="text-muted text-sm">{description}</p>
+                  </div>
+                )
               },
-            },
-            {
-              accessor: "outdated",
-              title: "Status",
-              textAlign: "right",
-              render: ({ maintained, outdated }) => maintained && <Badge color={outdated ? "red" : "gray"} className="ml-auto">{outdated ? "Outdated" : "Up to date"}</Badge>,
-            },
-            {
-              accessor: "actions",
-              title: "",
-              width: 120,
-              render: gen => (
-                <div className="flex gap-0 flex-nowrap">
-                  <div className="flex-1" />
-                  <ActionIcon onClick={() => handleRefresh(gen)} variant="subtle" color="black" hidden={!gen.playlistId}><LuListRestart className="size-5" /></ActionIcon>
-                  <ActionIcon onClick={() => handleEdit(gen)} variant="subtle" color="black"><LuPencil /></ActionIcon>
-                  <ActionIcon variant="subtle" color="red"><LuTrash2 /></ActionIcon>
-                </div>
-              )
-            },
-          ]}
-          records={generators ?? []}
-          fetching={isLoading}
-          noRecordsText="No generators"
-        />
-      </Section>
-    </Page>
+              {
+                accessor: "playlist",
+                title: "Playlist",
+                textAlign: "right",
+                render: ({ playlistId }) => playlistId && <LuCheck className="ml-auto text-green-500 size-6" />,
+              },
+              {
+                accessor: "maintained",
+                title: "Maintained",
+                textAlign: "right",
+                render: ({ playlistId, maintained, intervalS }) => {
+                  if (!playlistId) return null
+                  const days = Math.floor(intervalS / (60 * 60 * 24))
+
+                  return <Badge color={maintained ? "secondary.1" : "gray"} className="ml-auto">{maintained ? `Every${days !== 1 ? ' ' + days : ''} day${days !== 1 ? 's' : ''}` : "One off"}</Badge>
+                },
+              },
+              {
+                accessor: "outdated",
+                title: "Status",
+                textAlign: "right",
+                render: ({ maintained, outdated }) => maintained && <Badge color={outdated ? "red" : "gray"} className="ml-auto">{outdated ? "Outdated" : "Up to date"}</Badge>,
+              },
+              {
+                accessor: "actions",
+                title: "",
+                width: 120,
+                render: gen => (
+                  <div className="flex gap-0 flex-nowrap">
+                    <div className="flex-1" />
+                    <ActionIcon onClick={() => handleRefresh(gen)} variant="subtle" color="black" hidden={!gen.playlistId}><LuListRestart className="size-5" /></ActionIcon>
+                    <ActionIcon onClick={() => handleEdit(gen)} variant="subtle" color="black"><LuPencil /></ActionIcon>
+                    <ActionIcon onClick={() => handleDeleteInit(gen)} variant="subtle" color="red"><LuTrash2 /></ActionIcon>
+                  </div>
+                )
+              },
+            ]}
+            records={generators ?? []}
+            fetching={isLoading}
+            noRecordsText="No generators"
+          />
+        </Section>
+      </Page>
+      <Confirm
+        opened={opened}
+        onClose={close}
+        modalTitle="Delete"
+        title="Delete Generator"
+        description="Are you sure you want to delete the generator"
+        content={generatorToDelete?.playlistId && (
+          <Stack>
+            <Checkbox checked={checkedPlaylist} onChange={e => setCheckedPlaylist(e.target.checked)} label="Delete Spotify playlist" />
+          </Stack>
+        )}
+        onConfirm={handleDelete}
+      />
+
+    </>
   )
 }

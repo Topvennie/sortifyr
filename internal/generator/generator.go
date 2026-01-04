@@ -282,3 +282,29 @@ func (g *generator) Update(ctx context.Context, gen *model.Generator, createPlay
 
 	return nil
 }
+
+func (g *generator) Delete(ctx context.Context, user model.User, gen model.Generator, deletePlaylist bool) error {
+	if err := g.generator.Delete(ctx, gen.ID); err != nil {
+		return err
+	}
+
+	if gen.PlaylistID != 0 && deletePlaylist {
+		playlist, err := g.playlist.Get(ctx, gen.PlaylistID)
+		if err != nil {
+			return err
+		}
+		if playlist == nil {
+			return fmt.Errorf("db unsynced %+v | %w", gen, err)
+		}
+
+		if err := spotifyapi.C.PlaylistDelete(ctx, user, playlist.SpotifyID); err != nil {
+			return fmt.Errorf("delete playlist %w", err)
+		}
+
+		if err := g.playlist.DeleteUserByUserPlaylist(ctx, model.PlaylistUser{UserID: user.ID, PlaylistID: playlist.ID}); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

@@ -44,6 +44,16 @@ func (q *Queries) GeneratorCreate(ctx context.Context, arg GeneratorCreateParams
 	return id, err
 }
 
+const generatorDelete = `-- name: GeneratorDelete :exec
+DELETE FROM generators
+WHERE id = $1
+`
+
+func (q *Queries) GeneratorDelete(ctx context.Context, id int32) error {
+	_, err := q.db.Exec(ctx, generatorDelete, id)
+	return err
+}
+
 const generatorGet = `-- name: GeneratorGet :one
 SELECT id, user_id, name, description, playlist_id, maintained, interval, outdated, parameters, updated_at
 FROM generators

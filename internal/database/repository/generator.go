@@ -109,3 +109,11 @@ func (g *Generator) Update(ctx context.Context, gen model.Generator) error {
 
 	return nil
 }
+
+func (g *Generator) Delete(ctx context.Context, genID int) error {
+	if err := g.repo.queries(ctx).GeneratorDelete(ctx, int32(genID)); err != nil {
+		return fmt.Errorf("delete generator %d | %w", genID, err)
+	}
+
+	return nil
+}

@@ -31,3 +31,7 @@ SET
   parameters = coalesce(sqlc.narg('parameters'), parameters),
   updated_at = NOW()
 WHERE id = $1;
+
+-- name: GeneratorDelete :exec
+DELETE FROM generators
+WHERE id = $1;

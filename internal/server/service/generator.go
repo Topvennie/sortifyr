@@ -75,7 +75,7 @@ func (g *Generator) Refresh(ctx context.Context, userID, genID int) error {
 		return fiber.ErrForbidden
 	}
 
-	if err := generator.G.Refresh(*user, *gen); err != nil {
+	if err := generator.G.Refresh(ctx, *user, *gen); err != nil {
 		zap.S().Error(err)
 		return fiber.ErrInternalServerError
 	}
@@ -137,4 +137,35 @@ func (g *Generator) Update(ctx context.Context, userID int, genSave dto.Generato
 	}
 
 	return dto.GeneratorDTO(gen), nil
+}
+
+func (g *Generator) Delete(ctx context.Context, userID, genID int, deletePlaylist bool) error {
+	user, err := g.user.GetByID(ctx, userID)
+	if err != nil {
+		zap.S().Error(err)
+		return fiber.ErrInternalServerError
+	}
+	if user == nil {
+		return fiber.ErrUnauthorized
+	}
+
+	gen, err := g.generator.Get(ctx, genID)
+	if err != nil {
+		zap.S().Error(err)
+		return fiber.ErrInternalServerError
+	}
+	if gen == nil {
+		return fiber.ErrNotFound
+	}
+
+	if gen.UserID != userID {
+		return fiber.ErrForbidden
+	}
+
+	if err := generator.G.Delete(ctx, *user, *gen, deletePlaylist); err != nil {
+		zap.S().Error(err)
+		return fiber.ErrInternalServerError
+	}
+
+	return nil
 }

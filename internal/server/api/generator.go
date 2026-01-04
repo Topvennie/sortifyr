@@ -1,6 +1,8 @@
 package api
 
 import (
+	"strconv"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/topvennie/sortifyr/internal/server/dto"
 	"github.com/topvennie/sortifyr/internal/server/service"
@@ -29,6 +31,7 @@ func (g *Generator) createRoutes() {
 	g.router.Post("/refesh/:id", g.refresh)
 	g.router.Put("/", g.create)
 	g.router.Post("/:id", g.update)
+	g.router.Delete("/:id", g.delete)
 }
 
 func (g *Generator) getAll(c *fiber.Ctx) error {
@@ -134,4 +137,29 @@ func (g *Generator) update(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(newGen)
+}
+
+func (g *Generator) delete(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(int)
+	if !ok {
+		return fiber.ErrUnauthorized
+	}
+
+	genID, err := c.ParamsInt("id")
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	deletePlaylist := false
+	if v := c.Query("deletePlaylist"); v != "" {
+		if b, err := strconv.ParseBool(v); err == nil {
+			deletePlaylist = b
+		}
+	}
+
+	if err := g.generator.Delete(c.Context(), userID, genID, deletePlaylist); err != nil {
+		return err
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
 }
