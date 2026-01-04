@@ -40,6 +40,32 @@ func Init(repo repository.Repository) error {
 	return nil
 }
 
+func (g *generator) Refresh(ctx context.Context, user model.User, gen model.Generator) error {
+	if gen.PlaylistID == 0 {
+		return errors.New("generator doesn't have a playlist")
+	}
+
+	// If the generator is maintained then we can just run the task
+	if gen.Maintained {
+		return task.Manager.RunRecurringByUID(getTaskUID(&gen), user)
+	}
+
+	// Else we need to run it once
+	return task.Manager.Add(ctx, task.NewTask(
+		getTaskUID(&gen),
+		getTaskName(&gen),
+		task.IntervalOnce,
+		true,
+		func(ctx context.Context, _ []model.User) []task.TaskResult {
+			return []task.TaskResult{{
+				User:    user,
+				Message: "",
+				Error:   g.maintain(ctx, user, gen.ID),
+			}}
+		},
+	))
+}
+
 func (g *generator) Create(ctx context.Context, gen *model.Generator, createPlaylist bool) error {
 	// Get user
 	user, err := g.user.GetByID(ctx, gen.UserID)

@@ -156,6 +156,7 @@ func (g *generator) syncOne(ctx context.Context, user model.User, gen *model.Gen
 }
 
 // maintain updates a maintained playlist to contain the newest tracks
+// TODO: Go over it
 func (g *generator) maintain(ctx context.Context, user model.User, genID int) error {
 	// Refresh generator data
 	gen, err := g.generator.Get(ctx, genID)

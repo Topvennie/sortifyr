@@ -1,20 +1,34 @@
 import { LinkButton } from "@/components/atoms/LinkButton"
 import { Page, PageTitle, Section, SectionTitle } from "@/components/atoms/Page"
 import { Table } from "@/components/molecules/Table"
-import { useGeneratorGetAll } from "@/lib/api/generator"
+import { useGeneratorGetAll, useGeneratorRefresh } from "@/lib/api/generator"
 import { Generator } from "@/lib/types/generator"
+import { getErrorMessage } from "@/lib/utils"
 import { ActionIcon, Badge, Group } from "@mantine/core"
+import { notifications } from "@mantine/notifications"
 import { useNavigate } from "@tanstack/react-router"
-import { LuCheck, LuPencil, LuSparkles, LuTrash2, LuUndo2 } from "react-icons/lu"
+import { LuCheck, LuListRestart, LuPencil, LuSparkles, LuTrash2 } from "react-icons/lu"
 
 export const GeneratorOverview = () => {
   const { data: generators, isLoading } = useGeneratorGetAll()
+  const generatorRefresh = useGeneratorRefresh()
 
   const navigate = useNavigate()
+
+  const handleRefresh = (gen: Generator) => {
+    generatorRefresh.mutateAsync(gen, {
+      onSuccess: () => notifications.show({ message: "Updating generator" }),
+      onError: async error => {
+        const msg = await getErrorMessage(error)
+        notifications.show({ color: "red", message: msg })
+      }
+    })
+  }
 
   const handleEdit = (gen: Generator) => {
     navigate({ to: "/generator/edit/$generatorId", params: { generatorId: gen.id.toString() } })
   }
+
 
   return (
     <Page>
@@ -69,11 +83,11 @@ export const GeneratorOverview = () => {
             {
               accessor: "actions",
               title: "",
-              width: 106,
+              width: 120,
               render: gen => (
                 <div className="flex gap-0 flex-nowrap">
                   <div className="flex-1" />
-                  <ActionIcon variant="subtle" color="black"><LuUndo2 /></ActionIcon>
+                  <ActionIcon onClick={() => handleRefresh(gen)} variant="subtle" color="black" hidden={!gen.playlistId}><LuListRestart className="size-5" /></ActionIcon>
                   <ActionIcon onClick={() => handleEdit(gen)} variant="subtle" color="black"><LuPencil /></ActionIcon>
                   <ActionIcon variant="subtle" color="red"><LuTrash2 /></ActionIcon>
                 </div>

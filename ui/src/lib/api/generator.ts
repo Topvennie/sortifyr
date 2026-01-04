@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { convertGenerators, GeneratorSchema } from "../types/generator"
+import { convertGenerators, Generator, GeneratorSchema } from "../types/generator"
 import { convertTracks } from "../types/track"
 import { apiGet, apiPost, apiPut } from "./query"
 import { STALE_TIME } from "../types/staletime"
@@ -19,6 +19,15 @@ export const useGeneratorPreview = () => {
   return useMutation({
     mutationFn: async (generator: GeneratorSchema) => (await apiPost(`${ENDPOINT}/preview`, generator.params, convertTracks)).data,
     throwOnError: true,
+  })
+}
+
+export const useGeneratorRefresh = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (generator: Pick<Generator, "id">) => apiPost(`${ENDPOINT}/refresh/${generator.id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["task"] }),
   })
 }
 

@@ -26,6 +26,7 @@ func NewGenerator(router fiber.Router, service service.Service) *Generator {
 func (g *Generator) createRoutes() {
 	g.router.Get("/", g.getAll)
 	g.router.Post("/preview", g.preview)
+	g.router.Post("/refesh/:id", g.refresh)
 	g.router.Put("/", g.create)
 	g.router.Post("/:id", g.update)
 }
@@ -64,6 +65,24 @@ func (g *Generator) preview(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(tracks)
+}
+
+func (g *Generator) refresh(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(int)
+	if !ok {
+		return fiber.ErrUnauthorized
+	}
+
+	genID, err := c.ParamsInt("id")
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	if err := g.generator.Refresh(c.Context(), userID, genID); err != nil {
+		return err
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
 }
 
 func (g *Generator) create(c *fiber.Ctx) error {

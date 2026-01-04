@@ -15,11 +15,13 @@ import (
 
 type Generator struct {
 	generator repository.Generator
+	user      repository.User
 }
 
 func (s *Service) NewGenerator() *Generator {
 	return &Generator{
 		generator: *s.repo.NewGenerator(),
+		user:      *s.repo.NewUser(),
 	}
 }
 
@@ -45,6 +47,40 @@ func (g *Generator) Preview(ctx context.Context, userID int, params dto.Generato
 	}
 
 	return utils.SliceMap(tracks, func(t model.Track) dto.Track { return dto.TrackDTO(&t) }), nil
+}
+
+func (g *Generator) Refresh(ctx context.Context, userID, genID int) error {
+	user, err := g.user.GetByID(ctx, userID)
+	if err != nil {
+		zap.S().Error(err)
+		return fiber.ErrInternalServerError
+	}
+	if user == nil {
+		return fiber.ErrUnauthorized
+	}
+
+	gen, err := g.generator.Get(ctx, genID)
+	if err != nil {
+		return fiber.ErrInternalServerError
+	}
+	if gen == nil {
+		return fiber.ErrNotFound
+	}
+
+	if gen.PlaylistID == 0 {
+		return fiber.NewError(fiber.StatusBadRequest, "generator does not have a playlist")
+	}
+
+	if gen.UserID != userID {
+		return fiber.ErrForbidden
+	}
+
+	if err := generator.G.Refresh(*user, *gen); err != nil {
+		zap.S().Error(err)
+		return fiber.ErrInternalServerError
+	}
+
+	return nil
 }
 
 func (g *Generator) Create(ctx context.Context, userID int, genSave dto.GeneratorSave) (dto.Generator, error) {
