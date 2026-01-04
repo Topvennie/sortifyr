@@ -36,6 +36,7 @@ func (g *generator) taskRegister(ctx context.Context) error {
 		getTaskUID(nil),
 		getTaskName(nil),
 		config.GetDefaultDuration("task.generator_s", 60*60),
+		false,
 		func(ctx context.Context, users []model.User) []task.TaskResult {
 			results := make([]task.TaskResult, 0, len(users))
 
@@ -63,6 +64,7 @@ func (g *generator) taskRegister(ctx context.Context) error {
 			getTaskUID(gen),
 			getTaskName(gen),
 			gen.Interval,
+			true,
 			func(ctx context.Context, _ []model.User) []task.TaskResult {
 				return []task.TaskResult{{
 					User:    gen.User,

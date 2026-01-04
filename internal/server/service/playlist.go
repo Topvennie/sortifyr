@@ -115,6 +115,7 @@ func (p *Playlist) RemoveDuplicates(ctx context.Context, userID int) error {
 		taskPlaylistDuplicateUID,
 		"Playlist Duplicates Removal",
 		task.IntervalOnce,
+		false,
 		func(ctx context.Context, _ []model.User) []task.TaskResult {
 			return []task.TaskResult{{
 				User:    *user,

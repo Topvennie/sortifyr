@@ -44,6 +44,9 @@ type Task interface {
 	// Interval returns the time between executions.
 	// An interval == IntervalOnce means it will only run once.
 	Interval() time.Duration
+	// Hidden determines if the task is returned when Tasks is
+	// called on the manager.
+	Hidden() bool
 	// The function that actually gets executed when it's time
 	// The user slice contains all users for who the task needs to executed
 	// In reality this will either be a single user (if the user started the task from the api)
@@ -84,6 +87,7 @@ type internalTask struct {
 	uid      string
 	name     string
 	interval time.Duration
+	hidden   bool
 	fn       func(context.Context, []model.User) []TaskResult
 	ctx      context.Context
 }
@@ -95,7 +99,7 @@ var _ Task = (*internalTask)(nil)
 // It supports an optional context, if none is given the background context is used
 // Logs (info level) when a task starts and ends
 // Logs (error level) any error that occurs during the task execution
-func NewTask(uid, name string, interval time.Duration, fn func(context.Context, []model.User) []TaskResult, ctx ...context.Context) Task {
+func NewTask(uid, name string, interval time.Duration, hidden bool, fn func(context.Context, []model.User) []TaskResult, ctx ...context.Context) Task {
 	c := context.Background()
 	if len(ctx) > 0 {
 		c = ctx[0]
@@ -105,6 +109,7 @@ func NewTask(uid, name string, interval time.Duration, fn func(context.Context, 
 		uid:      uid,
 		name:     name,
 		interval: interval,
+		hidden:   hidden,
 		fn:       fn,
 		ctx:      c,
 	}
@@ -120,6 +125,10 @@ func (t *internalTask) Name() string {
 
 func (t *internalTask) Interval() time.Duration {
 	return t.interval
+}
+
+func (t *internalTask) Hidden() bool {
+	return t.hidden
 }
 
 func (t *internalTask) Func() func(context.Context, []model.User) []TaskResult {

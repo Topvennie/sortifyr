@@ -115,6 +115,7 @@ func (g *generator) Create(ctx context.Context, gen *model.Generator, createPlay
 			getTaskUID(gen),
 			getTaskName(gen),
 			gen.Interval,
+			true,
 			func(ctx context.Context, _ []model.User) []task.TaskResult {
 				return []task.TaskResult{{
 					User:    *user,
@@ -240,6 +241,7 @@ func (g *generator) Update(ctx context.Context, gen *model.Generator, createPlay
 			getTaskUID(gen),
 			getTaskName(gen),
 			gen.Interval,
+			true,
 			func(ctx context.Context, _ []model.User) []task.TaskResult {
 				return []task.TaskResult{{
 					User:    *user,

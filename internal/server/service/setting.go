@@ -59,6 +59,7 @@ func (s *Setting) Export(ctx context.Context, userID int, zip []byte) error {
 		taskExportUID,
 		"Import Spotify Export",
 		task.IntervalOnce,
+		false,
 		func(ctx context.Context, _ []model.User) []task.TaskResult {
 			return []task.TaskResult{{
 				User:    *user,

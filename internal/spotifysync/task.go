@@ -26,6 +26,7 @@ func (c *client) taskRegister(ctx context.Context) error {
 		taskPlaylistUID,
 		"Playlist",
 		config.GetDefaultDuration("task.playlist_s", 60*60),
+		false,
 		c.taskWrap(c.taskPlaylist),
 	)); err != nil {
 		return err
@@ -35,6 +36,7 @@ func (c *client) taskRegister(ctx context.Context) error {
 		taskAlbumUID,
 		"Album",
 		config.GetDefaultDuration("task.album_s", 60*60),
+		false,
 		c.taskWrap(c.taskAlbum),
 	)); err != nil {
 		return err
@@ -44,6 +46,7 @@ func (c *client) taskRegister(ctx context.Context) error {
 		taskShowUID,
 		"Show",
 		config.GetDefaultDuration("task.show_s", 12*60*60),
+		false,
 		c.taskWrap(c.taskShow),
 	)); err != nil {
 		return err
@@ -53,6 +56,7 @@ func (c *client) taskRegister(ctx context.Context) error {
 		taskTrackUID,
 		"Track",
 		config.GetDefaultDuration("task.track_s", 5*60),
+		false,
 		c.taskWrap(c.taskTrack),
 	)); err != nil {
 		return err
@@ -62,6 +66,7 @@ func (c *client) taskRegister(ctx context.Context) error {
 		taskArtistUID,
 		"Artist",
 		config.GetDefaultDuration("task.artist_s", 5*60),
+		false,
 		c.taskWrap(c.taskArtist),
 	)); err != nil {
 		return err
@@ -71,6 +76,7 @@ func (c *client) taskRegister(ctx context.Context) error {
 		taskUserUID,
 		"User",
 		config.GetDefaultDuration("task.user_s", 6*60*60),
+		false,
 		c.taskWrap(c.taskUser),
 	)); err != nil {
 		return err
@@ -80,6 +86,7 @@ func (c *client) taskRegister(ctx context.Context) error {
 		taskHistoryUID,
 		"Current",
 		config.GetDefaultDuration("task.history_s", 15),
+		false,
 		c.taskWrap(c.taskHistory),
 	)); err != nil {
 		return err
@@ -89,6 +96,7 @@ func (c *client) taskRegister(ctx context.Context) error {
 		taskLinkUID,
 		"Link",
 		config.GetDefaultDuration("task.link_s", 12*60*60),
+		false,
 		c.taskWrap(c.taskLink),
 	)); err != nil {
 		return err

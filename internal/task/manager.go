@@ -22,6 +22,7 @@ type job struct {
 	task     model.Task
 	status   Status
 	interval time.Duration
+	hidden   bool
 
 	users []model.User // If it's not empty then an user triggered it and is waiting on it
 }
@@ -146,6 +147,7 @@ func (m *manager) Add(ctx context.Context, newTask Task) error {
 		task:     *task,
 		status:   status,
 		interval: newTask.Interval(),
+		hidden:   newTask.Hidden(),
 		users:    []model.User{},
 	}
 
@@ -239,6 +241,10 @@ func (m *manager) Tasks() ([]Stat, error) {
 		}
 
 		if j, ok := jobsLocal[taskUID]; ok {
+			if j.hidden {
+				continue
+			}
+
 			lastRun, err := job.LastRun()
 			if err != nil {
 				return nil, fmt.Errorf("get last run for task %s | %w", job.Name(), err)
