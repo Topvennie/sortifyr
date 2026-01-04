@@ -35,9 +35,10 @@ export interface Generator {
   id: number;
   name: string;
   description?: string;
-  playlist: boolean;
+  playlistId?: number;
   maintained: boolean;
   intervalS: number;
+  outdated: boolean;
   params: {
     trackAmount: number;
     excludedPlaylistIds: number[];
@@ -53,6 +54,7 @@ export interface Generator {
       recentWindow: GeneratorWindow;
     };
   };
+  lastUpdate?: Date;
 }
 
 export const convertGenerator = (g: API.Generator): Generator => {
@@ -60,9 +62,10 @@ export const convertGenerator = (g: API.Generator): Generator => {
     id: g.id,
     name: g.name,
     description: g.description,
-    playlist: g.playlist,
+    playlistId: g.playlist_id,
     maintained: g.maintained,
     intervalS: g.interval_s,
+    outdated: g.outdated,
     params: {
       trackAmount: g.params.track_amount,
       excludedPlaylistIds: g.params.excluded_playlist_ids ?? [],
@@ -75,9 +78,10 @@ export const convertGenerator = (g: API.Generator): Generator => {
       } : undefined,
       paramsOldTop: g.params.params_old_top ? {
         peakWindow: convertGeneratorWindow(g.params.params_old_top.peak_window),
-        recentWindow: convertGeneratorWindow(g.params.params_old_top.current_window),
+        recentWindow: convertGeneratorWindow(g.params.params_old_top.recent_window),
       } : undefined,
-    }
+    },
+    lastUpdate: g.last_update ? new Date(g.last_update) : undefined,
   }
 }
 
@@ -87,7 +91,8 @@ export const convertGenerators = (g: API.Generator[]): Generator[] => {
 
 export const convertGeneratorSchema = (g: Generator): GeneratorSchema => {
   return {
-    ...g
+    ...g,
+    createPlaylist: g.playlistId !== 0,
   }
 }
 
@@ -103,13 +108,13 @@ export const generatorSchema = z.object({
   id: z.number().positive().optional(),
   name: z.string().nonempty(),
   description: z.string().optional(),
-  playlist: z.boolean(),
+  createPlaylist: z.boolean(),
   maintained: z.boolean(),
-  intervalS: z.number().positive(),
+  intervalS: z.number().nonnegative(),
   params: z.object({
     trackAmount: z.number().positive(),
-    excludedPlaylistIds: z.array(z.number().positive()).optional(),
-    excludedTrackIds: z.array(z.number().positive()).optional(),
+    excludedPlaylistIds: z.array(z.number().positive()),
+    excludedTrackIds: z.array(z.number().positive()),
     preset: z.enum(GeneratorPreset),
     paramsCustom: z.object({}).partial().optional(),
     paramsForgotten: z.object({}).partial().optional(),

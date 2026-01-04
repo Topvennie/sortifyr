@@ -99,9 +99,10 @@ export namespace API {
   export interface Generator extends Base {
     name: string;
     description?: string;
-    playlist: boolean;
+    playlist_id?: number;
     maintained: boolean;
     interval_s: number;
+    outdated: boolean;
     params: {
       track_amount: number;
       excluded_playlist_ids?: number[];
@@ -114,8 +115,9 @@ export namespace API {
       };
       params_old_top?: {
         peak_window: GeneratorWindow;
-        current_window: GeneratorWindow;
+        recent_window: GeneratorWindow;
       };
-    }
+    };
+    last_update?: string;
   }
 }

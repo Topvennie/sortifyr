@@ -7,33 +7,36 @@ import (
 )
 
 // normalize sets default values for the parameters
-func normalize(params *model.GeneratorParams) {
+func normalize(gen *model.Generator) {
+	params := gen.Params
 	if params.TrackAmount == 0 {
 		params.TrackAmount = 50
 	}
 
 	switch params.Preset {
 	case model.GeneratorPresetCustom:
-		normalizePresetCustom(params)
+		normalizePresetCustom(&params)
 		params.ParamsForgotten = nil
 		params.ParamsTop = nil
 		params.ParamsOldTop = nil
 	case model.GeneratorPresetForgotten:
-		normalizePresetForgotten(params)
+		normalizePresetForgotten(&params)
 		params.ParamsCustom = nil
 		params.ParamsTop = nil
 		params.ParamsOldTop = nil
 	case model.GeneratorPresetTop:
-		normalizePresetTop(params)
+		normalizePresetTop(&params)
 		params.ParamsCustom = nil
 		params.ParamsForgotten = nil
 		params.ParamsOldTop = nil
 	case model.GeneratorPresetOldTop:
-		normalizePresetOldTop(params)
+		normalizePresetOldTop(&params)
 		params.ParamsCustom = nil
 		params.ParamsForgotten = nil
 		params.ParamsTop = nil
 	}
+
+	gen.Params = params
 }
 
 func normalizePresetCustom(params *model.GeneratorParams) {

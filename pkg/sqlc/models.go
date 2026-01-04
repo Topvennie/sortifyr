@@ -108,7 +108,7 @@ type Generator struct {
 	Description pgtype.Text
 	PlaylistID  pgtype.Int4
 	Maintained  bool
-	Interval    pgtype.Int4
+	Interval    pgtype.Int8
 	Outdated    bool
 	Parameters  []byte
 	UpdatedAt   pgtype.Timestamptz

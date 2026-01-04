@@ -10,22 +10,22 @@ import (
 	"github.com/topvennie/sortifyr/pkg/utils"
 )
 
-func (g *generator) Generate(ctx context.Context, gen model.Generator) ([]model.Track, error) {
+func (g *generator) Generate(ctx context.Context, gen *model.Generator) ([]model.Track, error) {
 	var tracks []model.Track
 	var err error
 
-	normalize(&gen.Params)
+	normalize(gen)
 
 	switch gen.Params.Preset {
 	case model.GeneratorPresetForgotten:
-		tracks, err = g.forgotten(gen)
+		tracks, err = g.forgotten(*gen)
 	case model.GeneratorPresetTop:
-		tracks, err = g.top(ctx, gen)
+		tracks, err = g.top(ctx, *gen)
 	case model.GeneratorPresetOldTop:
-		tracks, err = g.oldTop(ctx, gen)
+		tracks, err = g.oldTop(ctx, *gen)
 
 	default:
-		tracks, err = g.custom(gen)
+		tracks, err = g.custom(*gen)
 	}
 
 	if err != nil {

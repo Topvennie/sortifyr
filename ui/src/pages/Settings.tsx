@@ -1,13 +1,18 @@
 import { Button } from "@/components/atoms/Button"
 import { Page, PageTitle, Section, SectionTitle } from "@/components/atoms/Page"
 import { useSettingUploadExport } from "@/lib/api/setting"
+import { useTaskGetAll } from "@/lib/api/task"
 import { CONTENT_TYPE } from "@/lib/types/contentType"
+import { TaskStatus } from "@/lib/types/task"
 import { getErrorMessage } from "@/lib/utils"
 import { FileButton, Group, Pill, Stack } from "@mantine/core"
 import { notifications } from "@mantine/notifications"
 import { LuCloudUpload } from "react-icons/lu"
 
 export const Settings = () => {
+  const { data: tasks } = useTaskGetAll()
+  const task = tasks?.find(t => t.uid === "task-export")
+
   const uploadExport = useSettingUploadExport()
 
   const handleExport = (file: File | null) => {
@@ -49,7 +54,7 @@ export const Settings = () => {
           <FileButton onChange={handleExport} accept={CONTENT_TYPE.ZIP}>
             {(props) => (
               <div>
-                <Button leftSection={<LuCloudUpload />} {...props}>Upload Spotify data</Button>
+                <Button leftSection={<LuCloudUpload />} disabled={task?.status === TaskStatus.Running} {...props}>Upload Spotify data</Button>
               </div>
             )}
           </FileButton>

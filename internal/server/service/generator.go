@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/topvennie/sortifyr/internal/database/model"
@@ -37,7 +38,7 @@ func (g *Generator) Preview(ctx context.Context, userID int, params dto.Generato
 		UserID: userID,
 		Params: params.ToModel(),
 	}
-	tracks, err := generator.G.Generate(ctx, gen)
+	tracks, err := generator.G.Generate(ctx, &gen)
 	if err != nil {
 		zap.S().Error(err)
 		return nil, fiber.ErrInternalServerError
@@ -55,11 +56,19 @@ func (g *Generator) Create(ctx context.Context, userID int, genSave dto.Generato
 	if !genSave.Maintained {
 		gen.Interval = 0
 	}
+	if gen.Maintained && gen.Interval < 24*time.Hour {
+		return dto.Generator{}, fiber.NewError(fiber.StatusBadRequest, "interval needs to be > 0 if maintained")
+	}
 
-	if err := generator.G.Create(ctx, *gen, genSave.CreatePlaylist); err != nil {
+	zap.S().Debug(genSave)
+	zap.S().Debug(*gen)
+
+	if err := generator.G.Create(ctx, gen, genSave.CreatePlaylist); err != nil {
 		zap.S().Error(err)
 		return dto.Generator{}, fiber.ErrInternalServerError
 	}
+
+	zap.S().Debug(*gen)
 
 	return dto.GeneratorDTO(gen), nil
 }
@@ -86,7 +95,7 @@ func (g *Generator) Update(ctx context.Context, userID int, genSave dto.Generato
 		gen.Interval = 0
 	}
 
-	if err := generator.G.Update(ctx, *gen, genSave.CreatePlaylist); err != nil {
+	if err := generator.G.Update(ctx, gen, genSave.CreatePlaylist); err != nil {
 		zap.S().Error(err)
 		return dto.Generator{}, fiber.ErrInternalServerError
 	}

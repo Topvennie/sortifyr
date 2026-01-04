@@ -46,6 +46,23 @@ func (g *Generator) GetByUser(ctx context.Context, userID int) ([]*model.Generat
 	return utils.SliceMap(gens, model.GeneratorModel), nil
 }
 
+func (g *Generator) GetMaintainedPopulated(ctx context.Context) ([]*model.Generator, error) {
+	gens, err := g.repo.queries(ctx).GeneratorGetMaintainedPopulated(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("get maintained generators populated %w", err)
+	}
+
+	return utils.SliceMap(gens, func(g sqlc.GeneratorGetMaintainedPopulatedRow) *model.Generator {
+		gen := model.GeneratorModel(g.Generator)
+		gen.User = *model.UserModel(g.User)
+
+		return gen
+	}), nil
+}
+
 func (g *Generator) Create(ctx context.Context, gen *model.Generator) error {
 	params, err := json.Marshal(gen.Params)
 	if err != nil {

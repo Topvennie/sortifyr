@@ -23,7 +23,7 @@ type GeneratorCreateParams struct {
 	Description pgtype.Text
 	PlaylistID  pgtype.Int4
 	Maintained  bool
-	Interval    pgtype.Int4
+	Interval    pgtype.Int8
 	Outdated    bool
 	Parameters  []byte
 }
@@ -105,6 +105,54 @@ func (q *Queries) GeneratorGetByUser(ctx context.Context, userID int32) ([]Gener
 	return items, nil
 }
 
+const generatorGetMaintainedPopulated = `-- name: GeneratorGetMaintainedPopulated :many
+SELECT g.id, g.user_id, g.name, g.description, g.playlist_id, g.maintained, g.interval, g.outdated, g.parameters, g.updated_at, u.id, u.uid, u.name, u.display_name, u.email
+FROM generators g
+LEFT JOIN users u ON u.id = g.user_id
+WHERE g.maintained = true
+`
+
+type GeneratorGetMaintainedPopulatedRow struct {
+	Generator Generator
+	User      User
+}
+
+func (q *Queries) GeneratorGetMaintainedPopulated(ctx context.Context) ([]GeneratorGetMaintainedPopulatedRow, error) {
+	rows, err := q.db.Query(ctx, generatorGetMaintainedPopulated)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GeneratorGetMaintainedPopulatedRow
+	for rows.Next() {
+		var i GeneratorGetMaintainedPopulatedRow
+		if err := rows.Scan(
+			&i.Generator.ID,
+			&i.Generator.UserID,
+			&i.Generator.Name,
+			&i.Generator.Description,
+			&i.Generator.PlaylistID,
+			&i.Generator.Maintained,
+			&i.Generator.Interval,
+			&i.Generator.Outdated,
+			&i.Generator.Parameters,
+			&i.Generator.UpdatedAt,
+			&i.User.ID,
+			&i.User.Uid,
+			&i.User.Name,
+			&i.User.DisplayName,
+			&i.User.Email,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const generatorUpdate = `-- name: GeneratorUpdate :exec
 UPDATE generators
 SET 
@@ -125,7 +173,7 @@ type GeneratorUpdateParams struct {
 	Description pgtype.Text
 	PlaylistID  pgtype.Int4
 	Maintained  pgtype.Bool
-	Interval    pgtype.Int4
+	Interval    pgtype.Int8
 	Outdated    pgtype.Bool
 	Parameters  []byte
 }

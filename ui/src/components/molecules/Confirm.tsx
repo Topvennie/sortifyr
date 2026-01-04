@@ -7,9 +7,10 @@ interface Props extends Omit<ModalBaseProps, 'title'> {
   title: string;
   description?: string;
   onConfirm: () => void;
+  loading?: boolean;
 }
 
-export const Confirm = ({ modalTitle, title, description, onConfirm, ...props }: Props) => {
+export const Confirm = ({ modalTitle, title, description, onConfirm, loading = false, ...props }: Props) => {
   return (
     <ModalCenter title={modalTitle} {...props}>
       <Stack>
@@ -19,7 +20,7 @@ export const Confirm = ({ modalTitle, title, description, onConfirm, ...props }:
           <Button onClick={props.onClose} variant="default">
             Cancel
           </Button>
-          <Button onClick={onConfirm}>
+          <Button onClick={onConfirm} loading={loading}>
             Confirm
           </Button>
         </Group>

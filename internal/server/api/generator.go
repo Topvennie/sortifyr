@@ -95,7 +95,7 @@ func (g *Generator) update(c *fiber.Ctx) error {
 		return fiber.ErrUnauthorized
 	}
 
-	id, err := c.ParamsInt(":id")
+	id, err := c.ParamsInt("id")
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}

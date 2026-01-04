@@ -151,8 +151,10 @@ func (c *client) request(ctx context.Context, user model.User, method, url strin
 		return c.request(ctx, user, method, url, body, target)
 	}
 
-	if err := json.NewDecoder(resp.Body).Decode(target); err != nil {
-		return fmt.Errorf("decode body to json %w", err)
+	if target != noResp {
+		if err := json.NewDecoder(resp.Body).Decode(target); err != nil {
+			return fmt.Errorf("decode body to json %w", err)
+		}
 	}
 
 	return nil

@@ -7,7 +7,7 @@ CREATE TABLE generators (
   description TEXT,
   playlist_id INTEGER REFERENCES playlists (id),
   maintained BOOLEAN NOT NULL,
-  interval INTEGER,
+  interval BIGINT,
   outdated BOOLEAN NOT NULL,
   parameters JSONB,
   updated_at TIMESTAMPTZ NOT NULL,

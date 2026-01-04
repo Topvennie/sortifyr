@@ -40,7 +40,7 @@ func Init(repo repository.Repository) error {
 	return nil
 }
 
-func (g *generator) Create(ctx context.Context, gen model.Generator, createPlaylist bool) error {
+func (g *generator) Create(ctx context.Context, gen *model.Generator, createPlaylist bool) error {
 	// Get user
 	user, err := g.user.GetByID(ctx, gen.UserID)
 	if err != nil {
@@ -83,6 +83,12 @@ func (g *generator) Create(ctx context.Context, gen model.Generator, createPlayl
 		if err := spotifyapi.C.PlaylistCreate(ctx, *user, &playlist); err != nil {
 			return err
 		}
+		if err := g.playlist.Create(ctx, &playlist); err != nil {
+			return err
+		}
+		if err := g.playlist.CreateUser(ctx, &model.PlaylistUser{UserID: user.ID, PlaylistID: playlist.ID}); err != nil {
+			return err
+		}
 
 		gen.PlaylistID = playlist.ID
 
@@ -90,22 +96,24 @@ func (g *generator) Create(ctx context.Context, gen model.Generator, createPlayl
 		if err := spotifyapi.C.PlaylistPostTrackAll(ctx, *user, playlist.SpotifyID, tracks); err != nil {
 			return err
 		}
+	} else {
+		normalize(gen)
 	}
 
 	// Save in database
-	if err := g.generator.Create(ctx, &gen); err != nil {
+	if err := g.generator.Create(ctx, gen); err != nil {
 		return err
 	}
 
 	// Start task for maintaince
 	if gen.Maintained {
 		if gen.Interval.Nanoseconds() == 0 {
-			return fmt.Errorf("interval is equal to 0 %+v", gen)
+			return fmt.Errorf("interval is equal to 0 %+v", *gen)
 		}
 
 		if err := task.Manager.Add(ctx, task.NewTask(
-			getTaskUID(&gen),
-			getTaskName(&gen),
+			getTaskUID(gen),
+			getTaskName(gen),
 			gen.Interval,
 			func(ctx context.Context, _ []model.User) []task.TaskResult {
 				return []task.TaskResult{{
@@ -122,7 +130,7 @@ func (g *generator) Create(ctx context.Context, gen model.Generator, createPlayl
 	return nil
 }
 
-func (g *generator) Update(ctx context.Context, gen model.Generator, createPlaylist bool) error {
+func (g *generator) Update(ctx context.Context, gen *model.Generator, createPlaylist bool) error {
 	// Get user
 	user, err := g.user.GetByID(ctx, gen.UserID)
 	if err != nil {
@@ -156,6 +164,9 @@ func (g *generator) Update(ctx context.Context, gen model.Generator, createPlayl
 			return fmt.Errorf("playlist with id %d not found", oldGen.PlaylistID)
 		}
 
+		if err := g.playlist.DeleteUserByUserPlaylist(ctx, model.PlaylistUser{UserID: user.ID, PlaylistID: playlist.ID}); err != nil {
+			return err
+		}
 		if err := spotifyapi.C.PlaylistDelete(ctx, *user, playlist.SpotifyID); err != nil {
 			return err
 		}
@@ -201,10 +212,12 @@ func (g *generator) Update(ctx context.Context, gen model.Generator, createPlayl
 		if err := spotifyapi.C.PlaylistPostTrackAll(ctx, *user, playlist.SpotifyID, tracks); err != nil {
 			return err
 		}
+	} else {
+		normalize(gen)
 	}
 
 	// Update in database
-	if err := g.generator.Update(ctx, gen); err != nil {
+	if err := g.generator.Update(ctx, *gen); err != nil {
 		return err
 	}
 
@@ -220,12 +233,12 @@ func (g *generator) Update(ctx context.Context, gen model.Generator, createPlayl
 	// Start task for maintaince
 	if gen.Maintained {
 		if gen.Interval.Nanoseconds() == 0 {
-			return fmt.Errorf("interval is equal to 0 %+v", gen)
+			return fmt.Errorf("interval is equal to 0 %+v", *gen)
 		}
 
 		if err := task.Manager.Add(ctx, task.NewTask(
-			getTaskUID(&gen),
-			getTaskName(&gen),
+			getTaskUID(gen),
+			getTaskName(gen),
 			gen.Interval,
 			func(ctx context.Context, _ []model.User) []task.TaskResult {
 				return []task.TaskResult{{

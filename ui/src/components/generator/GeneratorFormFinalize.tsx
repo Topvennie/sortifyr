@@ -12,15 +12,15 @@ type Props = {
 }
 
 export const GeneratorFormFinalize = ({ form, nextStep, prevStep }: Props) => {
-  const [playlist, setPlaylist] = useState(form.getValues().playlist)
+  const [createPlaylist, setCreatePlaylist] = useState(form.getValues().createPlaylist)
   const [maintained, setMaintained] = useState(form.getValues().maintained)
-  const [interval, setInterval] = useState<number | string>(form.getValues().intervalS)
+  const [interval, setInterval] = useState<number | string>(form.getValues().intervalS / (24 * 60 * 60))
 
   const handleTogglePlaylist = () => {
-    form.setFieldValue("playlist", !playlist)
-    setPlaylist(prev => !prev)
+    form.setFieldValue("createPlaylist", !createPlaylist)
+    setCreatePlaylist(prev => !prev)
 
-    if (!playlist) {
+    if (!createPlaylist) {
       form.setFieldValue("maintained", false)
       form.setFieldValue("intervalS", 0)
       setMaintained(false)
@@ -61,15 +61,15 @@ export const GeneratorFormFinalize = ({ form, nextStep, prevStep }: Props) => {
             <p className="text-sm">Create Spotify playlist</p>
             <p className="text-muted text-xs">If set to off, the generator only shows a preview.</p>
           </Stack>
-          <Switch checked={playlist} onChange={handleTogglePlaylist} />
+          <Switch checked={createPlaylist} onChange={handleTogglePlaylist} color="secondary.1" />
         </Group>
 
         <Group justify="space-between">
           <Stack gap={0}>
-            <p className={`text-sm ${!playlist && "text-gray-400"}`}>Auto-maintain playlist</p>
+            <p className={`text-sm ${!createPlaylist && "text-gray-400"}`}>Auto-maintain playlist</p>
             <p className="text-muted text-xs">Keep the playlist in sync with the new listening data.</p>
           </Stack>
-          <Switch checked={maintained} onChange={handleToggleMaintained} disabled={!playlist} />
+          <Switch checked={maintained} onChange={handleToggleMaintained} color="secondary.1" disabled={!createPlaylist} />
         </Group>
 
         <NumberInput label="Update interval (days)" description="Frequency to update the playlist if maintained" prefix="Days: " value={interval} onChange={handleChangeInterval} allowNegative={false} disabled={!maintained} />

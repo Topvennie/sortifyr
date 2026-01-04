@@ -12,10 +12,15 @@ import { Table } from "../molecules/Table"
 import { PlaylistCover } from "./PlaylistCover"
 import { getErrorMessage } from "@/lib/utils"
 import { Button } from "../atoms/Button"
+import { useTaskGetAll } from "@/lib/api/task"
+import { TaskStatus } from "@/lib/types/task"
 
 export const PlaylistDuplicates = () => {
   const { data: playlists, isLoading } = usePlaylistGetDuplicates()
   const removeDuplicates = usePlaylistRemoveDuplicates()
+
+  const { data: tasks } = useTaskGetAll()
+  const task = tasks?.find(t => t.uid === "task-playlist-duplicate")
 
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus<Playlist>>({
     columnAccessor: "name",
@@ -46,7 +51,7 @@ export const PlaylistDuplicates = () => {
           title="Playlist duplicates"
           description={`Playlists with duplicate tracks.\nClick on a row to see the duplicate tracks.`}
         />
-        <Button onClick={open} color="secondary.1">
+        <Button onClick={open} color="secondary.1" disabled={task?.status === TaskStatus.Running}>
           Remove duplicates
         </Button>
       </Group>

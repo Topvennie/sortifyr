@@ -27,6 +27,6 @@ func toTime(t time.Time) pgtype.Timestamptz {
 	return pgtype.Timestamptz{Time: t, Valid: !t.IsZero()}
 }
 
-func toDuration(d time.Duration) pgtype.Int4 {
-	return pgtype.Int4{Int32: int32(d.Nanoseconds()), Valid: d.Nanoseconds() > 0}
+func toDuration(d time.Duration) pgtype.Int8 {
+	return pgtype.Int8{Int64: d.Nanoseconds(), Valid: d.Nanoseconds() > 0}
 }

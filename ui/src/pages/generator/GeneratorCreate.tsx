@@ -1,4 +1,4 @@
-import { Page, PageTitle, Section } from "@/components/atoms/Page"
+import { Page, PageTitle } from "@/components/atoms/Page"
 import { GeneratorForm } from "@/components/generator/GeneratorForm"
 
 export const GeneratorCreate = () => {

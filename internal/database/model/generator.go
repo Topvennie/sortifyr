@@ -62,6 +62,9 @@ type Generator struct {
 	Outdated    bool
 	Params      GeneratorParams
 	UpdatedAt   time.Time
+
+	// Non db fields
+	User User
 }
 
 func GeneratorModel(g sqlc.Generator) *Generator {

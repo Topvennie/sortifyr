@@ -39,14 +39,14 @@ const routes: Route[] = [
     link: { to: "/link" },
   },
   {
-    title: "Background Tasks",
-    icon: <LuClock className="size-5" />,
-    link: { to: "/task" },
-  },
-  {
     title: "Generator",
     icon: <LuSlidersHorizontal className="size-5" />,
     link: { to: "/generator" },
+  },
+  {
+    title: "Background Tasks",
+    icon: <LuClock className="size-5" />,
+    link: { to: "/task" },
   },
   {
     title: "Settings",

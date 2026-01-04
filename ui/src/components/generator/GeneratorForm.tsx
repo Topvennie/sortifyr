@@ -18,6 +18,8 @@ type Props = {
   generator?: Generator;
 }
 
+// TODO: Before saving an update, warn about deleting
+
 const steps: Step[] = [
   { title: "Preset & Parameters" },
   { title: "Select Tracks" },
@@ -27,6 +29,7 @@ const steps: Step[] = [
 export const GeneratorForm = ({ generator: initialGenerator }: Props) => {
   const [active, setActive] = useState(0)
   const [opened, { open, close }] = useDisclosure()
+  const [submitting, setSubmitting] = useState(false)
 
   const generatorCreate = useGeneratorCreate()
   const generatorEdit = useGeneratorEdit()
@@ -36,14 +39,14 @@ export const GeneratorForm = ({ generator: initialGenerator }: Props) => {
   const form = useForm<GeneratorSchema>({
     initialValues: initialGenerator ? convertGeneratorSchema(initialGenerator) : {
       name: "",
-      description: undefined,
-      playlist: false,
+      description: "",
+      createPlaylist: false,
       maintained: false,
       intervalS: 0,
       params: {
         trackAmount: 50,
-        excludedPlaylistIds: undefined,
-        excludedTrackIds: undefined,
+        excludedPlaylistIds: [],
+        excludedTrackIds: [],
         preset: GeneratorPreset.Top,
         paramsCustom: {},
         paramsForgotten: {},
@@ -87,6 +90,8 @@ export const GeneratorForm = ({ generator: initialGenerator }: Props) => {
     if (update) action = generatorEdit
     else action = generatorCreate
 
+    setSubmitting(true)
+
     action.mutateAsync(form.getValues(), {
       onSuccess: () => {
         notifications.show({ title: form.getValues().name, message: `Generator ${update ? "updated" : "created"}` })
@@ -96,7 +101,10 @@ export const GeneratorForm = ({ generator: initialGenerator }: Props) => {
         const msg = await getErrorMessage(error)
         notifications.show({ color: "red", message: msg })
       },
-      onSettled: () => close(),
+      onSettled: () => {
+        close()
+        setSubmitting(false)
+      },
     })
   }
 
@@ -150,6 +158,7 @@ export const GeneratorForm = ({ generator: initialGenerator }: Props) => {
         title="Save Generator"
         description="Are you sure you want to save the generator?"
         onConfirm={handleSubmit}
+        loading={submitting}
       />
     </>
   )

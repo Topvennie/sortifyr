@@ -53,6 +53,28 @@ func (g *generator) taskRegister(ctx context.Context) error {
 		return err
 	}
 
+	gens, err := g.generator.GetMaintainedPopulated(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, gen := range gens {
+		if err := task.Manager.Add(ctx, task.NewTask(
+			getTaskUID(gen),
+			getTaskName(gen),
+			gen.Interval,
+			func(ctx context.Context, _ []model.User) []task.TaskResult {
+				return []task.TaskResult{{
+					User:    gen.User,
+					Message: "",
+					Error:   g.maintain(ctx, gen.User, gen.ID),
+				}}
+			},
+		)); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -104,7 +126,7 @@ func (g *generator) syncOne(ctx context.Context, user model.User, gen *model.Gen
 		}
 
 		// Get the new tracks
-		newTracks, err := g.Generate(ctx, *gen)
+		newTracks, err := g.Generate(ctx, gen)
 		if err != nil {
 			return err
 		}
@@ -158,7 +180,7 @@ func (g *generator) maintain(ctx context.Context, user model.User, genID int) er
 	}
 
 	// Get the new tracks
-	newTracks, err := g.Generate(ctx, *gen)
+	newTracks, err := g.Generate(ctx, gen)
 	if err != nil {
 		return err
 	}

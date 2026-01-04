@@ -3,6 +3,12 @@ SELECT *
 FROM generators
 WHERE id = $1;
 
+-- name: GeneratorGetMaintainedPopulated :many
+SELECT sqlc.embed(g), sqlc.embed(u)
+FROM generators g
+LEFT JOIN users u ON u.id = g.user_id
+WHERE g.maintained = true;
+
 -- name: GeneratorGetByUser :many
 SELECT *
 FROM generators

@@ -38,9 +38,9 @@ func fromTime(t pgtype.Timestamptz) time.Time {
 	return time.Time{}
 }
 
-func fromDuration(i pgtype.Int4) time.Duration {
+func fromDuration(i pgtype.Int8) time.Duration {
 	if i.Valid {
-		return time.Duration(i.Int32)
+		return time.Duration(i.Int64)
 	}
 
 	return time.Duration(0)
