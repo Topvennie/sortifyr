@@ -31,29 +31,48 @@ export const convertGeneratorWindow = (g: API.GeneratorWindow): GeneratorWindow 
   }
 }
 
+export interface GeneratorParams {
+  trackAmount: number;
+  excludedPlaylistIds: number[];
+  excludedTrackIds: number[];
+  preset: GeneratorPreset;
+  paramsCustom?: {};
+  paramsForgotten?: {};
+  paramsTop?: {
+    window: GeneratorWindow;
+  };
+  paramsOldTop?: {
+    peakWindow: GeneratorWindow;
+    recentWindow: GeneratorWindow;
+  };
+}
+
+export const convertGeneratorParams = (g: Pick<API.Generator, "params">): GeneratorParams => {
+  return {
+    trackAmount: g.params.track_amount,
+    excludedPlaylistIds: g.params.excluded_playlist_ids ?? [],
+    excludedTrackIds: g.params.excluded_track_ids ?? [],
+    preset: g.params.preset as GeneratorPreset,
+    paramsCustom: g.params.params_custom,
+    paramsForgotten: g.params.params_forgotten,
+    paramsTop: g.params.params_top ? {
+      window: convertGeneratorWindow(g.params.params_top.window)
+    } : undefined,
+    paramsOldTop: g.params.params_old_top ? {
+      peakWindow: convertGeneratorWindow(g.params.params_old_top.peak_window),
+      recentWindow: convertGeneratorWindow(g.params.params_old_top.recent_window),
+    } : undefined,
+  }
+}
+
 export interface Generator {
   id: number;
   name: string;
   description?: string;
   playlistId?: number;
-  maintained: boolean;
-  intervalS: number;
-  outdated: boolean;
-  params: {
-    trackAmount: number;
-    excludedPlaylistIds: number[];
-    excludedTrackIds: number[];
-    preset: GeneratorPreset;
-    paramsCustom?: {};
-    paramsForgotten?: {};
-    paramsTop?: {
-      window: GeneratorWindow;
-    };
-    paramsOldTop?: {
-      peakWindow: GeneratorWindow;
-      recentWindow: GeneratorWindow;
-    };
-  };
+  intervalDays: number;
+  spotifyOutdated: boolean;
+  params: GeneratorParams;
   lastUpdate?: Date;
 }
 
@@ -63,24 +82,9 @@ export const convertGenerator = (g: API.Generator): Generator => {
     name: g.name,
     description: g.description,
     playlistId: g.playlist_id,
-    maintained: g.maintained,
-    intervalS: g.interval_s,
-    outdated: g.outdated,
-    params: {
-      trackAmount: g.params.track_amount,
-      excludedPlaylistIds: g.params.excluded_playlist_ids ?? [],
-      excludedTrackIds: g.params.excluded_track_ids ?? [],
-      preset: g.params.preset as GeneratorPreset,
-      paramsCustom: g.params.params_custom,
-      paramsForgotten: g.params.params_forgotten,
-      paramsTop: g.params.params_top ? {
-        window: convertGeneratorWindow(g.params.params_top.window)
-      } : undefined,
-      paramsOldTop: g.params.params_old_top ? {
-        peakWindow: convertGeneratorWindow(g.params.params_old_top.peak_window),
-        recentWindow: convertGeneratorWindow(g.params.params_old_top.recent_window),
-      } : undefined,
-    },
+    intervalDays: g.interval_days,
+    spotifyOutdated: g.spotify_outdated,
+    params: convertGeneratorParams(g),
     lastUpdate: g.last_update ? new Date(g.last_update) : undefined,
   }
 }
@@ -91,8 +95,12 @@ export const convertGenerators = (g: API.Generator[]): Generator[] => {
 
 export const convertGeneratorSchema = (g: Generator): GeneratorSchema => {
   return {
-    ...g,
+    id: g.id,
+    name: g.name,
+    description: g.description,
     createPlaylist: g.playlistId !== 0,
+    intervalDays: g.intervalDays,
+    params: { ...g.params },
   }
 }
 
@@ -109,8 +117,7 @@ export const generatorSchema = z.object({
   name: z.string().nonempty(),
   description: z.string().optional(),
   createPlaylist: z.boolean(),
-  maintained: z.boolean(),
-  intervalS: z.number().nonnegative(),
+  intervalDays: z.number().nonnegative(),
   params: z.object({
     trackAmount: z.number().positive(),
     excludedPlaylistIds: z.array(z.number().positive()),

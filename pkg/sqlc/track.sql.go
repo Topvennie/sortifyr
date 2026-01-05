@@ -134,6 +134,41 @@ func (q *Queries) TrackGetAllBySpotify(ctx context.Context, dollar_1 []string) (
 	return items, nil
 }
 
+const trackGetByGenerator = `-- name: TrackGetByGenerator :many
+SELECT t.id, t.spotify_id, t.name, t.popularity, t.updated_at, t.duration_ms
+FROM tracks t
+LEFT JOIN generator_tracks gt ON gt.track_id = t.id
+WHERE gt.generator_id = $1
+ORDER BY t.name
+`
+
+func (q *Queries) TrackGetByGenerator(ctx context.Context, generatorID int32) ([]Track, error) {
+	rows, err := q.db.Query(ctx, trackGetByGenerator, generatorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Track
+	for rows.Next() {
+		var i Track
+		if err := rows.Scan(
+			&i.ID,
+			&i.SpotifyID,
+			&i.Name,
+			&i.Popularity,
+			&i.UpdatedAt,
+			&i.DurationMs,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const trackGetByName = `-- name: TrackGetByName :many
 SELECT id, spotify_id, name, popularity, updated_at, duration_ms
 FROM tracks

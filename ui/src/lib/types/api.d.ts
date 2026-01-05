@@ -100,9 +100,8 @@ export namespace API {
     name: string;
     description?: string;
     playlist_id?: number;
-    maintained: boolean;
-    interval_s: number;
-    outdated: boolean;
+    interval_days: number;
+    spotify_outdated: boolean;
     params: {
       track_amount: number;
       excluded_playlist_ids?: number[];

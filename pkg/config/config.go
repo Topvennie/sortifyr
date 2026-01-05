@@ -75,17 +75,17 @@ func GetDefaultBool(key string, defaultVal bool) bool {
 	return GetBool(key)
 }
 
-// GetDuration returns the value of the key as a duration
-func GetDuration(key string) time.Duration {
+// GetDurationS returns the value of the key as a duration
+func GetDurationS(key string) time.Duration {
 	bindEnv(key)
 	return viper.GetDuration(key) * time.Second
 }
 
-// GetDefaultDuration returns the value of the in time.Duration or a default value
+// GetDefaultDurationS returns the value of the in time.Duration or a default value
 // The default value should be the amount of seconds and gets transformed to a time.Duration
-func GetDefaultDuration(key string, defaultVal int) time.Duration {
+func GetDefaultDurationS(key string, defaultVal int) time.Duration {
 	viper.SetDefault(key, defaultVal)
-	return GetDuration(key)
+	return GetDurationS(key)
 }
 
 func IsDev() bool {

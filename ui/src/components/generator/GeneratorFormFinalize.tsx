@@ -3,7 +3,6 @@ import { Group, NumberInput, Stack, Switch, TextInput } from "@mantine/core";
 import { UseFormReturnType } from "@mantine/form";
 import { Button } from "../atoms/Button";
 import { Section, SectionTitle } from "../atoms/Page";
-import { useState } from "react";
 
 type Props = {
   form: UseFormReturnType<GeneratorSchema>
@@ -12,40 +11,6 @@ type Props = {
 }
 
 export const GeneratorFormFinalize = ({ form, nextStep, prevStep }: Props) => {
-  const [createPlaylist, setCreatePlaylist] = useState(form.getValues().createPlaylist)
-  const [maintained, setMaintained] = useState(form.getValues().maintained)
-  const [interval, setInterval] = useState<number | string>(form.getValues().intervalS / (24 * 60 * 60))
-
-  const handleTogglePlaylist = () => {
-    form.setFieldValue("createPlaylist", !createPlaylist)
-    setCreatePlaylist(prev => !prev)
-
-    if (!createPlaylist) {
-      form.setFieldValue("maintained", false)
-      form.setFieldValue("intervalS", 0)
-      setMaintained(false)
-    }
-  }
-
-  const handleToggleMaintained = () => {
-    form.setFieldValue("maintained", !maintained)
-    setMaintained(prev => !prev)
-
-    if (!maintained) {
-      form.setFieldValue("intervalS", 0)
-    }
-  }
-
-  const handleChangeInterval = (interval: number | string) => {
-    let newValue = 0
-    if (typeof interval === 'number') {
-      newValue = interval * 24 * 60 * 60
-    }
-
-    form.setFieldValue("intervalS", newValue)
-    setInterval(interval)
-  }
-
   return (
     <>
       <Section>
@@ -58,21 +23,13 @@ export const GeneratorFormFinalize = ({ form, nextStep, prevStep }: Props) => {
 
         <Group justify="space-between">
           <Stack gap={0}>
-            <p className="text-sm">Create Spotify playlist</p>
+            <p className="text-sm font-medium">Create Spotify playlist</p>
             <p className="text-muted text-xs">If set to off, the generator only shows a preview.</p>
           </Stack>
-          <Switch checked={createPlaylist} onChange={handleTogglePlaylist} color="secondary.1" />
+          <Switch color="secondary.1" {...form.getInputProps("createPlaylist")} />
         </Group>
 
-        <Group justify="space-between">
-          <Stack gap={0}>
-            <p className={`text-sm ${!createPlaylist && "text-gray-400"}`}>Auto-maintain playlist</p>
-            <p className="text-muted text-xs">Keep the playlist in sync with the new listening data.</p>
-          </Stack>
-          <Switch checked={maintained} onChange={handleToggleMaintained} color="secondary.1" disabled={!createPlaylist} />
-        </Group>
-
-        <NumberInput label="Update interval (days)" description="Frequency to update the playlist if maintained" prefix="Days: " value={interval} onChange={handleChangeInterval} allowNegative={false} disabled={!maintained} />
+        <NumberInput label="Update interval (days)" description="Frequency to update the playlist if maintained" prefix="Days: " allowNegative={false} {...form.getInputProps("intervalDays")} />
       </Section>
 
       <Group justify="end">

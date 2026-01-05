@@ -25,7 +25,7 @@ func (c *client) taskRegister(ctx context.Context) error {
 	if err := task.Manager.Add(ctx, task.NewTask(
 		taskPlaylistUID,
 		"Playlist",
-		config.GetDefaultDuration("task.playlist_s", 60*60),
+		config.GetDefaultDurationS("task.playlist_s", 60*60),
 		false,
 		c.taskWrap(c.taskPlaylist),
 	)); err != nil {
@@ -35,7 +35,7 @@ func (c *client) taskRegister(ctx context.Context) error {
 	if err := task.Manager.Add(ctx, task.NewTask(
 		taskAlbumUID,
 		"Album",
-		config.GetDefaultDuration("task.album_s", 60*60),
+		config.GetDefaultDurationS("task.album_s", 60*60),
 		false,
 		c.taskWrap(c.taskAlbum),
 	)); err != nil {
@@ -45,7 +45,7 @@ func (c *client) taskRegister(ctx context.Context) error {
 	if err := task.Manager.Add(ctx, task.NewTask(
 		taskShowUID,
 		"Show",
-		config.GetDefaultDuration("task.show_s", 12*60*60),
+		config.GetDefaultDurationS("task.show_s", 12*60*60),
 		false,
 		c.taskWrap(c.taskShow),
 	)); err != nil {
@@ -55,7 +55,7 @@ func (c *client) taskRegister(ctx context.Context) error {
 	if err := task.Manager.Add(ctx, task.NewTask(
 		taskTrackUID,
 		"Track",
-		config.GetDefaultDuration("task.track_s", 5*60),
+		config.GetDefaultDurationS("task.track_s", 5*60),
 		false,
 		c.taskWrap(c.taskTrack),
 	)); err != nil {
@@ -65,7 +65,7 @@ func (c *client) taskRegister(ctx context.Context) error {
 	if err := task.Manager.Add(ctx, task.NewTask(
 		taskArtistUID,
 		"Artist",
-		config.GetDefaultDuration("task.artist_s", 5*60),
+		config.GetDefaultDurationS("task.artist_s", 5*60),
 		false,
 		c.taskWrap(c.taskArtist),
 	)); err != nil {
@@ -75,7 +75,7 @@ func (c *client) taskRegister(ctx context.Context) error {
 	if err := task.Manager.Add(ctx, task.NewTask(
 		taskUserUID,
 		"User",
-		config.GetDefaultDuration("task.user_s", 6*60*60),
+		config.GetDefaultDurationS("task.user_s", 6*60*60),
 		false,
 		c.taskWrap(c.taskUser),
 	)); err != nil {
@@ -85,7 +85,7 @@ func (c *client) taskRegister(ctx context.Context) error {
 	if err := task.Manager.Add(ctx, task.NewTask(
 		taskHistoryUID,
 		"Current",
-		config.GetDefaultDuration("task.history_s", 15),
+		config.GetDefaultDurationS("task.history_s", 15),
 		false,
 		c.taskWrap(c.taskHistory),
 	)); err != nil {
@@ -95,7 +95,7 @@ func (c *client) taskRegister(ctx context.Context) error {
 	if err := task.Manager.Add(ctx, task.NewTask(
 		taskLinkUID,
 		"Link",
-		config.GetDefaultDuration("task.link_s", 12*60*60),
+		config.GetDefaultDurationS("task.link_s", 12*60*60),
 		false,
 		c.taskWrap(c.taskLink),
 	)); err != nil {

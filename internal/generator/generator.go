@@ -41,16 +41,13 @@ func Init(repo repository.Repository) error {
 }
 
 func (g *generator) Refresh(ctx context.Context, user model.User, gen model.Generator) error {
-	if gen.PlaylistID == 0 {
-		return errors.New("generator doesn't have a playlist")
-	}
-
-	// If the generator is maintained then we can just run the task
-	if gen.Maintained {
+	// If the generator has an interval then it has a scheduled task to update it.
+	// So we can just run that.
+	if gen.Interval > 0 {
 		return task.Manager.RunRecurringByUID(getTaskUID(&gen), user)
 	}
 
-	// Else we need to run it once
+	// Else we need to add a one time task to
 	return task.Manager.Add(ctx, task.NewTask(
 		getTaskUID(&gen),
 		getTaskName(&gen),
@@ -60,7 +57,7 @@ func (g *generator) Refresh(ctx context.Context, user model.User, gen model.Gene
 			return []task.TaskResult{{
 				User:    user,
 				Message: "",
-				Error:   g.maintain(ctx, user, gen.ID),
+				Error:   g.refresh(ctx, user, gen.ID),
 			}}
 		},
 	))
@@ -76,18 +73,12 @@ func (g *generator) Create(ctx context.Context, gen *model.Generator, createPlay
 		return fmt.Errorf("user not found %d", gen.UserID)
 	}
 
-	// Create playlist
+	// Create playlist in spotify and the db
 	gen.PlaylistID = 0
 	if createPlaylist {
-		// Get tracks
-		tracks, err := g.Generate(ctx, gen)
-		if err != nil {
-			return err
-		}
-
 		// Create playlist in Spotify
 		description := "Created by Sortifyr"
-		if gen.Maintained {
+		if gen.Interval > 0 {
 			days := int(gen.Interval.Nanoseconds() / int64(24*time.Hour))
 			daysStr := strconv.Itoa(days) + "days"
 			if days == 1 {
@@ -109,6 +100,8 @@ func (g *generator) Create(ctx context.Context, gen *model.Generator, createPlay
 		if err := spotifyapi.C.PlaylistCreate(ctx, *user, &playlist); err != nil {
 			return err
 		}
+
+		// Create playlist in db and link to user
 		if err := g.playlist.Create(ctx, &playlist); err != nil {
 			return err
 		}
@@ -117,13 +110,6 @@ func (g *generator) Create(ctx context.Context, gen *model.Generator, createPlay
 		}
 
 		gen.PlaylistID = playlist.ID
-
-		// Add tracks to the playlist
-		if err := spotifyapi.C.PlaylistPostTrackAll(ctx, *user, playlist.SpotifyID, tracks); err != nil {
-			return err
-		}
-	} else {
-		normalize(gen)
 	}
 
 	// Save in database
@@ -131,27 +117,28 @@ func (g *generator) Create(ctx context.Context, gen *model.Generator, createPlay
 		return err
 	}
 
-	// Start task for maintaince
-	if gen.Maintained {
-		if gen.Interval.Nanoseconds() == 0 {
-			return fmt.Errorf("interval is equal to 0 %+v", *gen)
-		}
+	// Add tracks to the playlist
+	// If the generator has an interval then the task will do it on the first run
+	// Else we need to just run the task once
+	interval := task.IntervalOnce
+	if gen.Interval > 0 {
+		interval = gen.Interval
+	}
 
-		if err := task.Manager.Add(ctx, task.NewTask(
-			getTaskUID(gen),
-			getTaskName(gen),
-			gen.Interval,
-			true,
-			func(ctx context.Context, _ []model.User) []task.TaskResult {
-				return []task.TaskResult{{
-					User:    *user,
-					Message: "",
-					Error:   g.maintain(ctx, *user, gen.ID),
-				}}
-			},
-		)); err != nil {
-			return err
-		}
+	if err := task.Manager.Add(ctx, task.NewTask(
+		getTaskUID(gen),
+		getTaskName(gen),
+		interval,
+		true,
+		func(ctx context.Context, _ []model.User) []task.TaskResult {
+			return []task.TaskResult{{
+				User:    *user,
+				Message: "",
+				Error:   g.refresh(ctx, *user, gen.ID),
+			}}
+		},
+	)); err != nil {
+		return err
 	}
 
 	return nil
@@ -180,6 +167,7 @@ func (g *generator) Update(ctx context.Context, gen *model.Generator, createPlay
 	// If the old generator had a playlist, delete it
 	// If the new generator has a playlist, create it
 	// This will sometimes delete and create a playlist after one another
+	// But it makes our lives simpler
 
 	// Delete the old playlist
 	if oldGen.PlaylistID != 0 {
@@ -191,9 +179,11 @@ func (g *generator) Update(ctx context.Context, gen *model.Generator, createPlay
 			return fmt.Errorf("playlist with id %d not found", oldGen.PlaylistID)
 		}
 
+		// Delete it from our db
 		if err := g.playlist.DeleteUserByUserPlaylist(ctx, model.PlaylistUser{UserID: user.ID, PlaylistID: playlist.ID}); err != nil {
 			return err
 		}
+		// Delete it from Spotify
 		if err := spotifyapi.C.PlaylistDelete(ctx, *user, playlist.SpotifyID); err != nil {
 			return err
 		}
@@ -202,15 +192,9 @@ func (g *generator) Update(ctx context.Context, gen *model.Generator, createPlay
 	// Create the new playlist
 	gen.PlaylistID = 0
 	if createPlaylist {
-		// Get tracks
-		tracks, err := g.Generate(ctx, gen)
-		if err != nil {
-			return err
-		}
-
 		// Create playlist in Spotify
 		description := "Created by Sortifyr"
-		if gen.Maintained {
+		if gen.Interval > 0 {
 			days := int(gen.Interval.Nanoseconds() / int64(24*time.Hour))
 			daysStr := strconv.Itoa(days) + "days"
 			if days == 1 {
@@ -233,14 +217,15 @@ func (g *generator) Update(ctx context.Context, gen *model.Generator, createPlay
 			return err
 		}
 
-		gen.PlaylistID = playlist.ID
-
-		// Add tracks to the playlist
-		if err := spotifyapi.C.PlaylistPostTrackAll(ctx, *user, playlist.SpotifyID, tracks); err != nil {
+		// Create playlist in db and link to user
+		if err := g.playlist.Create(ctx, &playlist); err != nil {
 			return err
 		}
-	} else {
-		normalize(gen)
+		if err := g.playlist.CreateUser(ctx, &model.PlaylistUser{UserID: user.ID, PlaylistID: playlist.ID}); err != nil {
+			return err
+		}
+
+		gen.PlaylistID = playlist.ID
 	}
 
 	// Update in database
@@ -249,7 +234,7 @@ func (g *generator) Update(ctx context.Context, gen *model.Generator, createPlay
 	}
 
 	// Remove old task
-	if oldGen.Maintained {
+	if oldGen.Interval > 0 {
 		if err := task.Manager.Remove(ctx, getTaskUID(oldGen)); err != nil {
 			if !errors.Is(err, task.ErrTaskNotExists) {
 				return err
@@ -257,27 +242,28 @@ func (g *generator) Update(ctx context.Context, gen *model.Generator, createPlay
 		}
 	}
 
-	// Start task for maintaince
-	if gen.Maintained {
-		if gen.Interval.Nanoseconds() == 0 {
-			return fmt.Errorf("interval is equal to 0 %+v", *gen)
-		}
+	// Add tracks to the playlist
+	// If the generator is maintained then the task will do it on the first run
+	// Else we need to just run the task once
+	interval := task.IntervalOnce
+	if gen.Interval > 0 {
+		interval = gen.Interval
+	}
 
-		if err := task.Manager.Add(ctx, task.NewTask(
-			getTaskUID(gen),
-			getTaskName(gen),
-			gen.Interval,
-			true,
-			func(ctx context.Context, _ []model.User) []task.TaskResult {
-				return []task.TaskResult{{
-					User:    *user,
-					Message: "",
-					Error:   g.maintain(ctx, *user, gen.ID),
-				}}
-			},
-		)); err != nil {
-			return err
-		}
+	if err := task.Manager.Add(ctx, task.NewTask(
+		getTaskUID(gen),
+		getTaskName(gen),
+		interval,
+		true,
+		func(ctx context.Context, _ []model.User) []task.TaskResult {
+			return []task.TaskResult{{
+				User:    *user,
+				Message: "",
+				Error:   g.refresh(ctx, *user, gen.ID),
+			}}
+		},
+	)); err != nil {
+		return err
 	}
 
 	return nil

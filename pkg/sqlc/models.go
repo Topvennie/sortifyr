@@ -102,16 +102,21 @@ type DirectoryPlaylist struct {
 }
 
 type Generator struct {
+	ID              int32
+	UserID          int32
+	Name            string
+	Description     pgtype.Text
+	PlaylistID      pgtype.Int4
+	Interval        pgtype.Int8
+	SpotifyOutdated bool
+	Parameters      []byte
+	UpdatedAt       pgtype.Timestamptz
+}
+
+type GeneratorTrack struct {
 	ID          int32
-	UserID      int32
-	Name        string
-	Description pgtype.Text
-	PlaylistID  pgtype.Int4
-	Maintained  bool
-	Interval    pgtype.Int8
-	Outdated    bool
-	Parameters  []byte
-	UpdatedAt   pgtype.Timestamptz
+	GeneratorID int32
+	TrackID     int32
 }
 
 type History struct {

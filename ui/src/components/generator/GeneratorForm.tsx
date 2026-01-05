@@ -41,8 +41,7 @@ export const GeneratorForm = ({ generator: initialGenerator }: Props) => {
       name: "",
       description: "",
       createPlaylist: false,
-      maintained: false,
-      intervalS: 0,
+      intervalDays: 0,
       params: {
         trackAmount: 50,
         excludedPlaylistIds: [],

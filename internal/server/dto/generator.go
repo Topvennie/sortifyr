@@ -158,28 +158,26 @@ func (g GeneratorParams) ToModel() model.GeneratorParams {
 }
 
 type Generator struct {
-	ID          int             `json:"id"`
-	Name        string          `json:"name" validate:"required"`
-	Description string          `json:"description,omitzero"`
-	PlaylistID  int             `json:"playlist_id,omitzero"`
-	Maintained  bool            `json:"maintained"`
-	IntervalS   int             `json:"interval_s"`
-	Outdated    bool            `json:"outdated"`
-	Params      GeneratorParams `json:"params" validate:"required"`
-	UpdatedAt   time.Time       `json:"updated_at"`
+	ID              int             `json:"id"`
+	Name            string          `json:"name" validate:"required"`
+	Description     string          `json:"description,omitzero"`
+	PlaylistID      int             `json:"playlist_id,omitzero"`
+	IntervalDays    int             `json:"interval_days"`
+	SpotifyOutdated bool            `json:"spotify_outdated"`
+	Params          GeneratorParams `json:"params" validate:"required"`
+	UpdatedAt       time.Time       `json:"updated_at"`
 }
 
 func GeneratorDTO(gen *model.Generator) Generator {
 	return Generator{
-		ID:          gen.ID,
-		Name:        gen.Name,
-		Description: gen.Description,
-		PlaylistID:  gen.PlaylistID,
-		Maintained:  gen.Maintained,
-		IntervalS:   int(gen.Interval.Seconds()),
-		Outdated:    gen.Outdated,
-		Params:      generatorParamsDTO(gen.Params),
-		UpdatedAt:   gen.UpdatedAt,
+		ID:              gen.ID,
+		Name:            gen.Name,
+		Description:     gen.Description,
+		PlaylistID:      gen.PlaylistID,
+		IntervalDays:    int(gen.Interval.Hours() / 24),
+		SpotifyOutdated: gen.SpotifyOutdated,
+		Params:          generatorParamsDTO(gen.Params),
+		UpdatedAt:       gen.UpdatedAt,
 	}
 }
 
@@ -188,8 +186,7 @@ type GeneratorSave struct {
 	Name           string          `json:"name" validate:"required"`
 	Description    string          `json:"description"`
 	CreatePlaylist bool            `json:"create_playlist"`
-	Maintained     bool            `json:"maintained"`
-	IntervalS      int             `json:"interval_s"`
+	IntervalDays   int             `json:"interval_days" validate:"min=0"`
 	Params         GeneratorParams `json:"params" validate:"required"`
 }
 
@@ -199,8 +196,7 @@ func (g GeneratorSave) ToModel(userID int) *model.Generator {
 		UserID:      userID,
 		Name:        g.Name,
 		Description: g.Description,
-		Maintained:  g.Maintained,
-		Interval:    time.Duration(g.IntervalS) * time.Second,
+		Interval:    time.Duration(g.IntervalDays) * 24 * time.Hour,
 		Params:      g.Params.ToModel(),
 	}
 }

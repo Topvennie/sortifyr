@@ -93,21 +93,16 @@ export const GeneratorOverview = () => {
                 render: ({ playlistId }) => playlistId && <LuCheck className="ml-auto text-green-500 size-6" />,
               },
               {
-                accessor: "maintained",
-                title: "Maintained",
+                accessor: "interval_days",
+                title: "Refresh",
                 textAlign: "right",
-                render: ({ playlistId, maintained, intervalS }) => {
-                  if (!playlistId) return null
-                  const days = Math.floor(intervalS / (60 * 60 * 24))
-
-                  return <Badge color={maintained ? "secondary.1" : "gray"} className="ml-auto">{maintained ? `Every${days !== 1 ? ' ' + days : ''} day${days !== 1 ? 's' : ''}` : "One off"}</Badge>
-                },
+                render: ({ intervalDays }) => intervalDays > 0 && <p>{`Every${intervalDays !== 1 ? ' ' + intervalDays : ''} day${intervalDays !== 1 ? 's' : ''}`}</p>
               },
               {
-                accessor: "outdated",
-                title: "Status",
+                accessor: "spotifyOutdated",
+                title: "Spotify Status",
                 textAlign: "right",
-                render: ({ maintained, outdated }) => maintained && <Badge color={outdated ? "red" : "gray"} className="ml-auto">{outdated ? "Outdated" : "Up to date"}</Badge>,
+                render: ({ playlistId, spotifyOutdated }) => playlistId && <Badge color={spotifyOutdated ? "red" : "gray"}>{spotifyOutdated ? "Outdated" : "Up to date"}</Badge>,
               },
               {
                 accessor: "actions",
