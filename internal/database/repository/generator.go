@@ -46,8 +46,8 @@ func (g *Generator) GetAll(ctx context.Context) ([]*model.Generator, error) {
 	return utils.SliceMap(gens, model.GeneratorModel), nil
 }
 
-func (g *Generator) GetByUser(ctx context.Context, userID int) ([]*model.Generator, error) {
-	gens, err := g.repo.queries(ctx).GeneratorGetByUser(ctx, int32(userID))
+func (g *Generator) GetByUserPopulated(ctx context.Context, userID int) ([]*model.Generator, error) {
+	gens, err := g.repo.queries(ctx).GeneratorGetByUserPopulated(ctx, int32(userID))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -55,7 +55,18 @@ func (g *Generator) GetByUser(ctx context.Context, userID int) ([]*model.Generat
 		return nil, fmt.Errorf("get generators by user %d | %w", userID, err)
 	}
 
-	return utils.SliceMap(gens, model.GeneratorModel), nil
+	genMap := make(map[int32]*model.Generator)
+	for i := range gens {
+		g, ok := genMap[gens[i].Generator.ID]
+		if !ok {
+			g = model.GeneratorModel(gens[i].Generator)
+		}
+
+		g.Tracks = append(g.Tracks, *model.TrackModel(gens[i].Track))
+		genMap[gens[i].Generator.ID] = g
+	}
+
+	return utils.MapValues(genMap), nil
 }
 
 func (g *Generator) Create(ctx context.Context, gen *model.Generator) error {

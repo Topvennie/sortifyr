@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"slices"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/topvennie/sortifyr/internal/database/model"
@@ -25,10 +27,14 @@ func (s *Service) NewGenerator() *Generator {
 }
 
 func (g *Generator) GetByUser(ctx context.Context, userID int) ([]dto.Generator, error) {
-	gens, err := g.generator.GetByUser(ctx, userID)
+	gens, err := g.generator.GetByUserPopulated(ctx, userID)
 	if err != nil {
 		zap.S().Error(err)
 		return nil, fiber.ErrInternalServerError
+	}
+
+	for _, gen := range gens {
+		slices.SortFunc(gen.Tracks, func(a, b model.Track) int { return strings.Compare(a.Name, b.Name) })
 	}
 
 	return utils.SliceMap(gens, dto.GeneratorDTO), nil

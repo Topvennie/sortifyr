@@ -113,7 +113,7 @@ export const NavLayout = ({ className, children, ...props }: Props) => {
               <Avatar user={user} />
               <p className="font-bold">{user?.name}</p>
               <ActionIcon onClick={() => setUserExpanded(prev => !prev)} variant="light" color="black" size="sm" className="ml-auto">
-                <LuTriangle className={`fill-black w-2 ${userExpanded && "rotate-180"}`} />
+                <LuTriangle className={`fill-black w-2 transform duration-300 ${userExpanded && "rotate-180"}`} />
               </ActionIcon>
             </Group>
             {userExpanded && (

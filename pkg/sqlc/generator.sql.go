@@ -110,31 +110,44 @@ func (q *Queries) GeneratorGetAll(ctx context.Context) ([]Generator, error) {
 	return items, nil
 }
 
-const generatorGetByUser = `-- name: GeneratorGetByUser :many
-SELECT id, user_id, name, description, playlist_id, interval, spotify_outdated, parameters, updated_at
-FROM generators
-WHERE user_id = $1
+const generatorGetByUserPopulated = `-- name: GeneratorGetByUserPopulated :many
+SELECT g.id, g.user_id, g.name, g.description, g.playlist_id, g.interval, g.spotify_outdated, g.parameters, g.updated_at, t.id, t.spotify_id, t.name, t.popularity, t.updated_at, t.duration_ms
+FROM generators g
+LEFT JOIN generator_tracks gt ON gt.generator_id = g.id
+LEFT JOIN tracks t ON t.id = gt.track_id
+WHERE g.user_id = $1
 `
 
-func (q *Queries) GeneratorGetByUser(ctx context.Context, userID int32) ([]Generator, error) {
-	rows, err := q.db.Query(ctx, generatorGetByUser, userID)
+type GeneratorGetByUserPopulatedRow struct {
+	Generator Generator
+	Track     Track
+}
+
+func (q *Queries) GeneratorGetByUserPopulated(ctx context.Context, userID int32) ([]GeneratorGetByUserPopulatedRow, error) {
+	rows, err := q.db.Query(ctx, generatorGetByUserPopulated, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Generator
+	var items []GeneratorGetByUserPopulatedRow
 	for rows.Next() {
-		var i Generator
+		var i GeneratorGetByUserPopulatedRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.UserID,
-			&i.Name,
-			&i.Description,
-			&i.PlaylistID,
-			&i.Interval,
-			&i.SpotifyOutdated,
-			&i.Parameters,
-			&i.UpdatedAt,
+			&i.Generator.ID,
+			&i.Generator.UserID,
+			&i.Generator.Name,
+			&i.Generator.Description,
+			&i.Generator.PlaylistID,
+			&i.Generator.Interval,
+			&i.Generator.SpotifyOutdated,
+			&i.Generator.Parameters,
+			&i.Generator.UpdatedAt,
+			&i.Track.ID,
+			&i.Track.SpotifyID,
+			&i.Track.Name,
+			&i.Track.Popularity,
+			&i.Track.UpdatedAt,
+			&i.Track.DurationMs,
 		); err != nil {
 			return nil, err
 		}

@@ -1,6 +1,7 @@
 import z from "zod";
 import { JSONBody } from "./general";
 import { API } from "./api";
+import { convertTracks, Track } from "./track";
 
 export enum GeneratorPreset {
   Custom = "custom",
@@ -73,6 +74,7 @@ export interface Generator {
   intervalDays: number;
   spotifyOutdated: boolean;
   params: GeneratorParams;
+  tracks: Track[];
   lastUpdate?: Date;
 }
 
@@ -85,6 +87,7 @@ export const convertGenerator = (g: API.Generator): Generator => {
     intervalDays: g.interval_days,
     spotifyOutdated: g.spotify_outdated,
     params: convertGeneratorParams(g),
+    tracks: convertTracks(g.tracks),
     lastUpdate: g.last_update ? new Date(g.last_update) : undefined,
   }
 }

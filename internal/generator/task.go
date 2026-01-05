@@ -87,7 +87,7 @@ func (g *generator) taskRegister(ctx context.Context) error {
 // spotifyStatus will check if the spotify playlist is up to date
 // It does NOT update the tracks from the generator
 func (g *generator) spotifyStatus(ctx context.Context, user model.User) error {
-	gens, err := g.generator.GetByUser(ctx, user.ID)
+	gens, err := g.generator.GetByUserPopulated(ctx, user.ID)
 	if err != nil {
 		return err
 	}
@@ -134,16 +134,10 @@ func (g *generator) spotifyStatusOne(ctx context.Context, user model.User, gen *
 			return err
 		}
 
-		// Get the generator tracks
-		genTracks, err := g.track.GetByGenerator(ctx, gen.ID)
-		if err != nil {
-			return err
-		}
-
 		slices.SortFunc(playlistTracks, func(a, b *model.Track) int { return a.ID - b.ID })
-		slices.SortFunc(genTracks, func(a, b *model.Track) int { return a.ID - b.ID })
+		slices.SortFunc(gen.Tracks, func(a, b model.Track) int { return a.ID - b.ID })
 
-		gen.SpotifyOutdated = !slices.EqualFunc(playlistTracks, genTracks, func(a, b *model.Track) bool { return a.Equal(*b) })
+		gen.SpotifyOutdated = !slices.EqualFunc(playlistTracks, gen.Tracks, func(a *model.Track, b model.Track) bool { return a.Equal(b) })
 	}
 
 	if err := g.generator.Update(ctx, *gen); err != nil {

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/topvennie/sortifyr/internal/database/model"
+	"github.com/topvennie/sortifyr/pkg/utils"
 )
 
 type GeneratorWindow struct {
@@ -165,6 +166,7 @@ type Generator struct {
 	IntervalDays    int             `json:"interval_days"`
 	SpotifyOutdated bool            `json:"spotify_outdated"`
 	Params          GeneratorParams `json:"params" validate:"required"`
+	Tracks          []Track         `json:"tracks"`
 	UpdatedAt       time.Time       `json:"updated_at"`
 }
 
@@ -177,6 +179,7 @@ func GeneratorDTO(gen *model.Generator) Generator {
 		IntervalDays:    int(gen.Interval.Hours() / 24),
 		SpotifyOutdated: gen.SpotifyOutdated,
 		Params:          generatorParamsDTO(gen.Params),
+		Tracks:          utils.SliceMap(gen.Tracks, func(t model.Track) Track { return TrackDTO(&t) }),
 		UpdatedAt:       gen.UpdatedAt,
 	}
 }

@@ -10,7 +10,7 @@ import { useDisclosure } from "@mantine/hooks"
 import { notifications } from "@mantine/notifications"
 import { useNavigate } from "@tanstack/react-router"
 import { useState } from "react"
-import { LuCheck, LuListRestart, LuPencil, LuSparkles, LuTrash2 } from "react-icons/lu"
+import { LuCheck, LuListRestart, LuPencil, LuSparkles, LuTrash2, LuTriangle } from "react-icons/lu"
 
 export const GeneratorOverview = () => {
   const { data: generators, isLoading } = useGeneratorGetAll()
@@ -22,6 +22,8 @@ export const GeneratorOverview = () => {
   const [opened, { open, close }] = useDisclosure()
 
   const navigate = useNavigate()
+
+  const [expandedRecordIds, setExpandedRecordIds] = useState<number[]>([]);
 
   const handleRefresh = (gen: Generator) => {
     generatorRefresh.mutateAsync(gen, {
@@ -56,8 +58,6 @@ export const GeneratorOverview = () => {
     })
   }
 
-  // TODO: Disable refresh when the task is running
-
   return (
     <>
       <Page>
@@ -76,6 +76,12 @@ export const GeneratorOverview = () => {
 
           <Table
             columns={[
+              {
+                accessor: "expanded",
+                title: "",
+                width: 24,
+                render: ({ id }) => <LuTriangle className={`fill-black w-2 transform duration-300 ${expandedRecordIds.includes(id) ? "" : "rotate-180"}`} />
+              },
               {
                 accessor: "name",
                 title: "Name & Description",
@@ -118,6 +124,24 @@ export const GeneratorOverview = () => {
                 )
               },
             ]}
+            rowExpansion={{
+              content: ({ record: { tracks } }) => (
+                <Table
+                  noHeader
+                  backgroundColor="background.1"
+                  columns={[
+                    { accessor: "name" },
+                  ]}
+                  records={tracks}
+                  height={180}
+                  className="m-4"
+                />
+              ),
+              expanded: {
+                recordIds: expandedRecordIds,
+                onRecordIdsChange: setExpandedRecordIds,
+              }
+            }}
             records={generators ?? []}
             fetching={isLoading}
             noRecordsText="No generators"

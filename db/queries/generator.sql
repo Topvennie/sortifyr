@@ -7,10 +7,12 @@ WHERE id = $1;
 SELECT *
 FROM generators;
 
--- name: GeneratorGetByUser :many
-SELECT *
-FROM generators
-WHERE user_id = $1;
+-- name: GeneratorGetByUserPopulated :many
+SELECT sqlc.embed(g), sqlc.embed(t)
+FROM generators g
+LEFT JOIN generator_tracks gt ON gt.generator_id = g.id
+LEFT JOIN tracks t ON t.id = gt.track_id
+WHERE g.user_id = $1;
 
 -- name: GeneratorCreate :one
 INSERT INTO generators (user_id, name, description, playlist_id, interval, spotify_outdated, parameters, updated_at)

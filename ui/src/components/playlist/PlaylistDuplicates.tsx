@@ -14,6 +14,7 @@ import { getErrorMessage } from "@/lib/utils"
 import { Button } from "../atoms/Button"
 import { useTaskGetAll } from "@/lib/api/task"
 import { TaskStatus } from "@/lib/types/task"
+import { LuTriangle } from "react-icons/lu"
 
 export const PlaylistDuplicates = () => {
   const { data: playlists, isLoading } = usePlaylistGetDuplicates()
@@ -32,6 +33,8 @@ export const PlaylistDuplicates = () => {
   }, [playlists, sortStatus])
 
   const [opened, { open, close }] = useDisclosure()
+
+  const [expandedRecordIds, setExpandedRecordIds] = useState<number[]>([]);
 
   const handleRemove = () => {
     removeDuplicates.mutateAsync(undefined, {
@@ -57,6 +60,12 @@ export const PlaylistDuplicates = () => {
       </Group>
       <Table
         columns={[
+          {
+            accessor: "expanded",
+            title: "",
+            width: 24,
+            render: ({ id }) => <LuTriangle className={`fill-black w-2 transform duration-300 ${expandedRecordIds.includes(id) ? "" : "rotate-180"}`} />
+          },
           {
             accessor: "id",
             title: "",
@@ -92,7 +101,11 @@ export const PlaylistDuplicates = () => {
               height={180}
               className="m-4"
             />
-          )
+          ),
+          expanded: {
+            recordIds: expandedRecordIds,
+            onRecordIdsChange: setExpandedRecordIds,
+          }
         }}
         records={records}
         noRecordsText="No playlists with duplicate tracks"

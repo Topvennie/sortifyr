@@ -117,6 +117,7 @@ export namespace API {
         recent_window: GeneratorWindow;
       };
     };
+    tracks: Track[];
     last_update?: string;
   }
 }

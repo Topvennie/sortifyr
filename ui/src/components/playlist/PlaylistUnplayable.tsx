@@ -6,9 +6,12 @@ import { useState, useMemo } from "react"
 import { SectionTitle } from "../atoms/Page"
 import { Table } from "../molecules/Table"
 import { PlaylistCover } from "./PlaylistCover"
+import { LuTriangle } from "react-icons/lu"
 
 export const PlaylistUnplayables = () => {
   const { data: playlists, isLoading } = usePlaylistGetUnplayables()
+
+  const [expandedRecordIds, setExpandedRecordIds] = useState<number[]>([]);
 
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus<Playlist>>({
     columnAccessor: "name",
@@ -27,6 +30,12 @@ export const PlaylistUnplayables = () => {
       />
       <Table
         columns={[
+          {
+            accessor: "expanded",
+            title: "",
+            width: 24,
+            render: ({ id }) => <LuTriangle className={`fill-black w-2 transform duration-300 ${expandedRecordIds.includes(id) ? "" : "rotate-180"}`} />
+          },
           {
             accessor: "id",
             title: "",
@@ -55,7 +64,11 @@ export const PlaylistUnplayables = () => {
               height={180}
               className="m-4"
             />
-          )
+          ),
+          expanded: {
+            recordIds: expandedRecordIds,
+            onRecordIdsChange: setExpandedRecordIds,
+          }
         }}
         records={records}
         noRecordsText="No playlists with unplayable tracks"
