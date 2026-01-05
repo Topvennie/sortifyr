@@ -115,26 +115,29 @@ export const generatorWindowSchema = z.object({
 })
 export type GeneratorWindowSchema = z.infer<typeof generatorWindowSchema> & JSONBody;
 
+export const generatorParamsSchema = z.object({
+  trackAmount: z.number().positive(),
+  excludedPlaylistIds: z.array(z.number().positive()),
+  excludedTrackIds: z.array(z.number().positive()),
+  preset: z.enum(GeneratorPreset),
+  paramsCustom: z.object({}).partial().optional(),
+  paramsForgotten: z.object({}).partial().optional(),
+  paramsTop: z.object({
+    window: generatorWindowSchema
+  }).partial().optional(),
+  paramsOldTop: z.object({
+    peakWindow: generatorWindowSchema,
+    recentWindow: generatorWindowSchema
+  }).partial().optional(),
+})
+export type GeneratorParamsSchema = z.infer<typeof generatorParamsSchema> & JSONBody;
+
 export const generatorSchema = z.object({
   id: z.number().positive().optional(),
   name: z.string().nonempty(),
   description: z.string().optional(),
   createPlaylist: z.boolean(),
   intervalDays: z.number().nonnegative(),
-  params: z.object({
-    trackAmount: z.number().positive(),
-    excludedPlaylistIds: z.array(z.number().positive()),
-    excludedTrackIds: z.array(z.number().positive()),
-    preset: z.enum(GeneratorPreset),
-    paramsCustom: z.object({}).partial().optional(),
-    paramsForgotten: z.object({}).partial().optional(),
-    paramsTop: z.object({
-      window: generatorWindowSchema
-    }).partial().optional(),
-    paramsOldTop: z.object({
-      peakWindow: generatorWindowSchema,
-      recentWindow: generatorWindowSchema
-    }).partial().optional(),
-  }).partial().optional(),
+  params: generatorParamsSchema.partial().optional(),
 })
 export type GeneratorSchema = z.infer<typeof generatorSchema> & JSONBody;

@@ -1,14 +1,17 @@
 import { useGeneratorPreview } from "@/lib/api/generator"
 import { usePlaylistGetAll } from "@/lib/api/playlist"
-import { GeneratorPreset, generatorPresetString, GeneratorSchema, GeneratorWindowSchema } from "@/lib/types/generator"
+import { GeneratorParamsSchema, GeneratorPreset, generatorPresetString, GeneratorSchema, GeneratorWindowSchema } from "@/lib/types/generator"
 import { getValueByPath } from "@/lib/utils"
 import { Alert, Group, Slider, Stack } from "@mantine/core"
 import { DatesRangeValue } from "@mantine/dates"
 import { UseFormReturnType } from "@mantine/form"
+import { useDisclosure } from "@mantine/hooks"
 import { notifications } from "@mantine/notifications"
+import { isEqual } from "lodash"
 import { ReactNode, useEffect, useState } from "react"
 import { Button } from "../atoms/Button"
 import { Section, SectionTitle } from "../atoms/Page"
+import { Confirm } from "../molecules/Confirm"
 import { DatePickerInput } from "../molecules/DatePickerInput"
 import { Table } from "../molecules/Table"
 import { GeneratorPlaylistTree } from "./GeneratorPlaylistTree"
@@ -20,8 +23,29 @@ type Props = {
 }
 
 export const GeneratorFormPreset = ({ form, nextStep, prevStep }: Props) => {
+  const [params, setParams] = useState<Partial<GeneratorParamsSchema> | undefined>(form.getValues().params)
+
   const { mutate: generatorPreview, data: tracks, isPending } = useGeneratorPreview()
-  useEffect(() => generatorPreview(form.getValues()), [])
+  useEffect(() => {
+    const values = form.getValues()
+    generatorPreview(values)
+    setParams(values.params)
+  }, [])
+
+  const [opened, { open, close }] = useDisclosure()
+  const handleNextInit = () => {
+    if (!isEqual(params, form.getValues().params)) {
+      open()
+      return
+    }
+
+    nextStep()
+  }
+
+  const handleNext = () => {
+    close()
+    nextStep()
+  }
 
   const [maxTracks, setMaxTracks] = useState(form.getValues().params?.trackAmount ?? 50)
 
@@ -41,7 +65,9 @@ export const GeneratorFormPreset = ({ form, nextStep, prevStep }: Props) => {
       return
     }
 
-    generatorPreview(form.getValues())
+    const values = form.getValues()
+    generatorPreview(values)
+    setParams(values.params)
   }
 
   const getPresetArguments = (preset: GeneratorPreset) => {
@@ -124,8 +150,17 @@ export const GeneratorFormPreset = ({ form, nextStep, prevStep }: Props) => {
 
       <Group justify="end">
         <Button onClick={prevStep} color="gray">Cancel</Button>
-        <Button onClick={nextStep}>Next: Tracks</Button>
+        <Button onClick={handleNextInit}>Next: Tracks</Button>
       </Group>
+
+      <Confirm
+        opened={opened}
+        onClose={close}
+        modalTitle="Generator"
+        title="Outdated Preview"
+        description={`The preview is outdated. The actual playlist will look different.\nAre you sure you want to continue?`}
+        onConfirm={handleNext}
+      />
     </>
   )
 }

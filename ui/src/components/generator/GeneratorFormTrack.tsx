@@ -1,6 +1,6 @@
 import { useGeneratorPreview } from "@/lib/api/generator"
 import { useTrackGetAllById } from "@/lib/api/track"
-import { GeneratorSchema } from "@/lib/types/generator"
+import { GeneratorParamsSchema, GeneratorSchema } from "@/lib/types/generator"
 import { Track } from "@/lib/types/track"
 import { ActionIcon, Group } from "@mantine/core"
 import { UseFormReturnType } from "@mantine/form"
@@ -9,6 +9,9 @@ import { Button } from "../atoms/Button"
 import { Section, SectionTitle } from "../atoms/Page"
 import { Table } from "../molecules/Table"
 import { LuTrash2, LuUndo2 } from "react-icons/lu"
+import { useDisclosure } from "@mantine/hooks"
+import { Confirm } from "../molecules/Confirm"
+import { isEqual } from "lodash"
 
 type Props = {
   form: UseFormReturnType<GeneratorSchema>
@@ -17,8 +20,29 @@ type Props = {
 }
 
 export const GeneratorFormTrack = ({ form, nextStep, prevStep }: Props) => {
+  const [params, setParams] = useState<Partial<GeneratorParamsSchema> | undefined>(form.getValues().params)
   const { mutate: generatorPreview, data: tracksInitial, isPending } = useGeneratorPreview()
-  useEffect(() => generatorPreview(form.getValues()), [])
+  useEffect(() => {
+    const values = form.getValues()
+    generatorPreview(values)
+    setParams(values.params)
+  }, [])
+
+  const [opened, { open, close }] = useDisclosure()
+  const handleNextInit = () => {
+    if (!isEqual(params, form.getValues().params)) {
+      open()
+      return
+    }
+
+    nextStep()
+  }
+
+  const handleNext = () => {
+    close()
+    nextStep()
+  }
+
   const [tracks, setTracks] = useState<Track[]>(tracksInitial ?? [])
   useEffect(() => {
     if (!tracksInitial) return
@@ -33,7 +57,9 @@ export const GeneratorFormTrack = ({ form, nextStep, prevStep }: Props) => {
   }, [excludedTracksInitial])
 
   const handleRefetchTracks = () => {
-    generatorPreview(form.getValues())
+    const values = form.getValues()
+    generatorPreview(values)
+    setParams(values.params)
   }
 
   const handleExcludeTrack = (track: Track) => {
@@ -103,8 +129,17 @@ export const GeneratorFormTrack = ({ form, nextStep, prevStep }: Props) => {
 
       <Group justify="end">
         <Button onClick={prevStep} color="gray">Back</Button>
-        <Button onClick={nextStep}>Next: Finalize</Button>
+        <Button onClick={handleNextInit}>Next: Finalize</Button>
       </Group>
+
+      <Confirm
+        opened={opened}
+        onClose={close}
+        modalTitle="Generator"
+        title="Outdated Preview"
+        description={`The preview is outdated. The actual playlist will look different.\nAre you sure you want to continue?`}
+        onConfirm={handleNext}
+      />
     </>
   )
 }
