@@ -1,13 +1,13 @@
 import { useTrackGetHistory } from "@/lib/api/track";
 import { TrackHistoryFilter } from "@/lib/types/track";
 import { formatDate } from "@/lib/utils";
+import { Group } from "@mantine/core";
 import { DatesRangeValue } from '@mantine/dates';
 import { useState } from "react";
 import { SectionTitle } from "../atoms/Page";
 import { DatePickerInput } from "../molecules/DatePickerInput";
-import { Table } from "../molecules/Table";
-import { Group } from "@mantine/core";
 import { Segment } from "../molecules/Segment";
+import { Table } from "../molecules/Table";
 
 export const TrackHistory = () => {
   const [range, setRange] = useState<[Date | null, Date | null]>([null, null])
@@ -56,6 +56,7 @@ export const TrackHistory = () => {
           placeholder="Filter by date range"
           value={range}
           onChange={handleRangeChange}
+          clearable
         />
         <Segment
           data={[

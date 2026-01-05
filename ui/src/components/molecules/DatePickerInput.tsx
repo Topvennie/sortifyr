@@ -6,7 +6,6 @@ type Props<T extends DatePickerType> = DatePickerInputProps<T>;
 export const DatePickerInput = <T extends DatePickerType>(props: Props<T>) => {
   return (
     <MDatePickerInput
-      clearable
       leftSection={<LuCalendar />}
       radius="lg"
       styles={{

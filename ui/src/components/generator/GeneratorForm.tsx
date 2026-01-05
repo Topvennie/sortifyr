@@ -41,7 +41,7 @@ export const GeneratorForm = ({ generator: initialGenerator }: Props) => {
       name: "",
       description: "",
       createPlaylist: false,
-      intervalDays: 0,
+      intervalDays: 1,
       params: {
         trackAmount: 50,
         excludedPlaylistIds: [],
@@ -51,24 +51,24 @@ export const GeneratorForm = ({ generator: initialGenerator }: Props) => {
         paramsForgotten: {},
         paramsTop: {
           window: {
-            start: daysAgo(14), // 14 days ago
+            start: daysAgo(14),
             end: new Date(),
             minPlays: 5,
-            burstIntervalS: 14 * 24 * 60 * 60 // 14 days
+            burstIntervalDays: 14
           },
         },
         paramsOldTop: {
           peakWindow: {
-            start: daysAgo(365), // 365 days ago
-            end: daysAgo(100), // 100 days ago
+            start: daysAgo(365),
+            end: daysAgo(100),
             minPlays: 5,
-            burstIntervalS: 14 * 24 * 60 * 60 // 14 days
+            burstIntervalDays: 14
           },
           recentWindow: {
-            start: daysAgo(14), // 14 days ago
+            start: daysAgo(14),
             end: new Date(),
             minPlays: 2,
-            burstIntervalS: 14 * 24 * 60 * 60 // 14 days
+            burstIntervalDays: 14
           }
         }
       }

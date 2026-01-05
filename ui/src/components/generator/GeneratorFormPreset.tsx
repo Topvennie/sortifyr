@@ -2,13 +2,14 @@ import { useGeneratorPreview } from "@/lib/api/generator"
 import { usePlaylistGetAll } from "@/lib/api/playlist"
 import { GeneratorPreset, generatorPresetString, GeneratorSchema, GeneratorWindowSchema } from "@/lib/types/generator"
 import { getValueByPath } from "@/lib/utils"
-import { Alert, Group, NumberInput, Stack } from "@mantine/core"
-import { DatePickerInput, DatesRangeValue } from "@mantine/dates"
+import { Alert, Group, Slider, Stack } from "@mantine/core"
+import { DatesRangeValue } from "@mantine/dates"
 import { UseFormReturnType } from "@mantine/form"
 import { notifications } from "@mantine/notifications"
 import { ReactNode, useEffect, useState } from "react"
 import { Button } from "../atoms/Button"
 import { Section, SectionTitle } from "../atoms/Page"
+import { DatePickerInput } from "../molecules/DatePickerInput"
 import { Table } from "../molecules/Table"
 import { GeneratorPlaylistTree } from "./GeneratorPlaylistTree"
 
@@ -22,8 +23,15 @@ export const GeneratorFormPreset = ({ form, nextStep, prevStep }: Props) => {
   const { mutate: generatorPreview, data: tracks, isPending } = useGeneratorPreview()
   useEffect(() => generatorPreview(form.getValues()), [])
 
+  const [maxTracks, setMaxTracks] = useState(form.getValues().params?.trackAmount ?? 50)
+
   const handleClickPreset = (p: GeneratorPreset) => {
     form.setFieldValue("params.preset", p)
+  }
+
+  const handleMaxTracksChange = (amount: number) => {
+    form.setFieldValue("params.maxTracks", amount)
+    setMaxTracks(amount)
   }
 
   const handleRefetchTracks = () => {
@@ -72,9 +80,23 @@ export const GeneratorFormPreset = ({ form, nextStep, prevStep }: Props) => {
           {presetArguments}
 
           <p className="text-muted">General parameters</p>
-          <Group>
-            <NumberInput label="Maximum Tracks" allowNegative={false} {...form.getInputProps("params.trackAmount")} />
-          </Group>
+          <Stack gap={0}>
+            <p className="text-sm font-medium">Maximum Tracks</p>
+            <p className="text-xs text-muted">The maximum amount of tracks</p>
+            <Group>
+              <Slider
+                value={maxTracks}
+                onChange={handleMaxTracksChange}
+                color="secondary.1"
+                restrictToMarks
+                marks={Array.from({ length: 40 }).map((_, i) => ({ value: (i + 1) * 5 }))}
+                min={1}
+                max={200}
+                className="flex-1"
+              />
+              <p className="w-[2ch] text-right">{maxTracks.toString().padStart(3, "0")}</p>
+            </Group>
+          </Stack>
 
           <p className="text-muted">Select playlists</p>
           <Playlists form={form} />
@@ -163,10 +185,8 @@ const Top = ({ form }: { form: UseFormReturnType<GeneratorSchema> }) => {
         {`Top finds the tracks you're listening to the most right now.
 It looks at your listening history within the selected time range and includes tracks that were played at least the minimum number of times within the given interval.`}
       </Alert>
-      <Stack gap={0}>
-        <p className="text-muted">Evaluation window</p>
-        <Window form={form} path="params.paramsTop.window" />
-      </Stack>
+      <p className="text-muted">Evaluation window</p>
+      <Window form={form} path="params.paramsTop.window" />
     </Stack>
   )
 }
@@ -187,14 +207,10 @@ It works in two steps:
 Example:
 If the historic range is 6 months, the minimum plays is 5, and the burst interval is 14 days, it will find tracks you played 5 or more times within any 14-day period during those 6 months. But only if you haven’t played them much recently.`}
       </Alert>
-      <Stack gap={0}>
-        <p className="text-muted">Historic listening window</p>
-        <Window form={form} path="params.paramsOldTop.peakWindow" />
-      </Stack>
-      <Stack gap={0}>
-        <p className="text-muted">Recent listening window</p>
-        <Window form={form} path="params.paramsOldTop.recentWindow" />
-      </Stack>
+      <p className="text-muted">Historic listening window</p>
+      <Window form={form} path="params.paramsOldTop.peakWindow" />
+      <p className="text-muted">Recent listening window</p>
+      <Window form={form} path="params.paramsOldTop.recentWindow" />
     </Stack>
   )
 }
@@ -203,8 +219,8 @@ const Window = ({ form, path }: { form: UseFormReturnType<GeneratorSchema>, path
   const window = getValueByPath<GeneratorWindowSchema>(form.getValues(), path)
 
   const [range, setRange] = useState<[Date | null, Date | null]>([window?.start ?? null, window?.end ?? null])
-  const [plays, setPlays] = useState<number | string>(window?.minPlays ?? 0)
-  const [burst, setBurst] = useState<number | string>((window?.burstIntervalS ?? 0) / (24 * 60 * 60))
+  const [plays, setPlays] = useState<number>(window?.minPlays ?? 0)
+  const [burst, setBurst] = useState<number>(window?.burstIntervalDays ?? 0)
 
   const handleRangeChange = (r: DatesRangeValue) => {
     form.setFieldValue(`${path}.start`, r[0] ?? undefined)
@@ -213,31 +229,62 @@ const Window = ({ form, path }: { form: UseFormReturnType<GeneratorSchema>, path
     setRange(r)
   }
 
-  const handlePlayChange = (plays: number | string) => {
-    let newValue: number | undefined = undefined
-    if (typeof plays === 'number') {
-      newValue = plays
-    }
-
-    form.setFieldValue(`${path}.minPlays`, newValue)
+  const handlePlayChange = (plays: number) => {
+    form.setFieldValue(`${path}.minPlays`, plays)
     setPlays(plays)
   }
 
-  const handleIntervalChange = (days: number | string) => {
-    let newValue: number | undefined = undefined
-    if (typeof days === 'number') {
-      newValue = days * 24 * 60 * 60
-    }
-
-    form.setFieldValue(`${path}.burstIntervalS`, newValue)
-    setBurst(days)
+  const handleBurstChange = (burst: number) => {
+    form.setFieldValue(`${path}.burstIntervalDays`, burst)
+    setBurst(burst)
   }
 
   return (
-    <Group>
-      <NumberInput label="Minimum Plays" description="Minimum number of times a track must be played" value={plays} onChange={handlePlayChange} allowNegative={false} />
-      <NumberInput label="Burst Interval (days)" description="Time window in which the minimum plays must occur" prefix="Days: " value={burst} onChange={handleIntervalChange} allowNegative={false} />
-      <DatePickerInput label="Time range" description="Listening history to analyze" type="range" numberOfColumns={2} value={range} onChange={handleRangeChange} />
-    </Group>
+    <Stack gap="xs">
+      <Stack gap={0}>
+        <p className="text-sm font-medium">Plays</p>
+        <p className="text-xs text-muted">The minimum amount of plays to trigger the window</p>
+        <Group>
+          <Slider
+            value={plays}
+            onChange={handlePlayChange}
+            color="secondary.1"
+            restrictToMarks
+            marks={Array.from({ length: 20 }).map((_, i) => ({ value: i + 1 }))}
+            min={1}
+            max={20}
+            className="flex-1"
+          />
+          <p className="w-[2ch] text-right">{plays.toString().padStart(2, "0")}</p>
+        </Group>
+      </Stack>
+      <Stack gap={0}>
+        <p className="text-sm font-medium">Burst Interval (days)</p>
+        <p className="text-xs text-muted">Time window in which the minimum plays must occur</p>
+        <Group>
+          <Slider
+            value={burst}
+            onChange={handleBurstChange}
+            color="secondary.1"
+            restrictToMarks
+            marks={Array.from({ length: 30 }).map((_, i) => ({ value: i + 1 }))}
+            min={1}
+            max={30}
+            className="flex-1"
+          />
+          <p className="w-[2ch] text-right">{burst.toString().padStart(2, "0")}</p>
+        </Group>
+      </Stack>
+      <Stack gap={0}>
+        <p className="text-sm font-medium">Time Range</p>
+        <p className="text-xs text-muted">The total time range in which to look for the minimum amount of plays in the interval</p>
+        <DatePickerInput
+          type="range"
+          numberOfColumns={2}
+          value={range}
+          onChange={handleRangeChange}
+        />
+      </Stack>
+    </Stack>
   )
 }

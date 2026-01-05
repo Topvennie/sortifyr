@@ -20,7 +20,7 @@ export interface GeneratorWindow {
   start: Date;
   end: Date;
   minPlays: number;
-  burstIntervalS: number;
+  burstIntervalDays: number;
 }
 
 export const convertGeneratorWindow = (g: API.GeneratorWindow): GeneratorWindow => {
@@ -28,7 +28,7 @@ export const convertGeneratorWindow = (g: API.GeneratorWindow): GeneratorWindow 
     start: new Date(g.start),
     end: new Date(g.end),
     minPlays: g.min_plays,
-    burstIntervalS: g.burst_interval_s,
+    burstIntervalDays: g.burst_interval_days,
   }
 }
 
@@ -111,7 +111,7 @@ export const generatorWindowSchema = z.object({
   start: z.date(),
   end: z.date(),
   minPlays: z.number().positive(),
-  burstIntervalS: z.number().positive(),
+  burstIntervalDays: z.number().positive(),
 })
 export type GeneratorWindowSchema = z.infer<typeof generatorWindowSchema> & JSONBody;
 

@@ -1,8 +1,10 @@
 import { GeneratorSchema } from "@/lib/types/generator";
-import { Group, NumberInput, Stack, Switch, TextInput } from "@mantine/core";
+import { Group, Slider, Stack, Switch } from "@mantine/core";
 import { UseFormReturnType } from "@mantine/form";
+import { useState } from "react";
 import { Button } from "../atoms/Button";
 import { Section, SectionTitle } from "../atoms/Page";
+import { TextInput } from "../molecules/TextInput";
 
 type Props = {
   form: UseFormReturnType<GeneratorSchema>
@@ -11,6 +13,13 @@ type Props = {
 }
 
 export const GeneratorFormFinalize = ({ form, nextStep, prevStep }: Props) => {
+  const [interval, setInterval] = useState(form.getValues().intervalDays)
+
+  const handleIntervalChange = (value: number) => {
+    form.setFieldValue("intervalDays", value)
+    setInterval(value)
+  }
+
   return (
     <>
       <Section>
@@ -29,7 +38,24 @@ export const GeneratorFormFinalize = ({ form, nextStep, prevStep }: Props) => {
           <Switch color="secondary.1" {...form.getInputProps("createPlaylist")} />
         </Group>
 
-        <NumberInput label="Update interval (days)" description="Frequency to update the playlist if maintained" prefix="Days: " allowNegative={false} {...form.getInputProps("intervalDays")} />
+
+        <Stack gap={0}>
+          <p className="text-sm font-medium">Update Interval (days)</p>
+          <p className="text-xs text-muted">Frequency to regenerate the tracks</p>
+          <Group>
+            <Slider
+              value={interval}
+              onChange={handleIntervalChange}
+              color="secondary.1"
+              restrictToMarks
+              marks={Array.from({ length: 30 }).map((_, i) => ({ value: i + 1 }))}
+              min={0}
+              max={30}
+              className="flex-1"
+            />
+            <p className="w-[2ch] text-right">{interval.toString().padStart(2, "0")}</p>
+          </Group>
+        </Stack>
       </Section>
 
       <Group justify="end">

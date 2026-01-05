@@ -8,18 +8,18 @@ import (
 )
 
 type GeneratorWindow struct {
-	Start          time.Time     `json:"start"`
-	End            time.Time     `json:"end"`
-	MinPlays       int           `json:"min_plays" validate:"min=0"`
-	BurstIntervalS time.Duration `json:"burst_interval_s"`
+	Start             time.Time `json:"start"`
+	End               time.Time `json:"end"`
+	MinPlays          int       `json:"min_plays" validate:"min=0"`
+	BurstIntervalDays int       `json:"burst_interval_days"`
 }
 
 func generatorWindowDTO(g model.GeneratorWindow) GeneratorWindow {
 	return GeneratorWindow{
-		Start:          g.Start,
-		End:            g.End,
-		MinPlays:       g.MinPlays,
-		BurstIntervalS: g.BurstInterval / time.Second,
+		Start:             g.Start,
+		End:               g.End,
+		MinPlays:          g.MinPlays,
+		BurstIntervalDays: int(g.BurstInterval.Hours() / 24),
 	}
 }
 
@@ -28,7 +28,7 @@ func (g GeneratorWindow) ToModel() *model.GeneratorWindow {
 		Start:         g.Start,
 		End:           g.End,
 		MinPlays:      g.MinPlays,
-		BurstInterval: g.BurstIntervalS * time.Second,
+		BurstInterval: time.Duration(g.BurstIntervalDays) * 24 * time.Hour,
 	}
 }
 

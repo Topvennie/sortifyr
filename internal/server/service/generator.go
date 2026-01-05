@@ -92,8 +92,6 @@ func (g *Generator) Create(ctx context.Context, userID int, genSave dto.Generato
 		return dto.Generator{}, fiber.ErrInternalServerError
 	}
 
-	zap.S().Debug(*gen)
-
 	return dto.GeneratorDTO(gen), nil
 }
 

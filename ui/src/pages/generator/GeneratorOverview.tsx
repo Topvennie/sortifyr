@@ -9,7 +9,7 @@ import { ActionIcon, Badge, Checkbox, Group, Stack } from "@mantine/core"
 import { useDisclosure } from "@mantine/hooks"
 import { notifications } from "@mantine/notifications"
 import { useNavigate } from "@tanstack/react-router"
-import { useState } from "react"
+import { MouseEvent, useEffect, useState } from "react"
 import { LuCheck, LuListRestart, LuPencil, LuSparkles, LuTrash2, LuTriangle } from "react-icons/lu"
 
 export const GeneratorOverview = () => {
@@ -21,25 +21,43 @@ export const GeneratorOverview = () => {
   const [checkedPlaylist, setCheckedPlaylist] = useState(false)
   const [opened, { open, close }] = useDisclosure()
 
+  const [refreshing, setRefreshing] = useState(false)
+  useEffect(() => {
+    if (!refreshing) return;
+
+    const timer = setTimeout(() => {
+      setRefreshing(false);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [refreshing]);
+
   const navigate = useNavigate()
 
   const [expandedRecordIds, setExpandedRecordIds] = useState<number[]>([]);
 
-  const handleRefresh = (gen: Generator) => {
+  const handleRefresh = (e: MouseEvent<HTMLButtonElement>, gen: Generator) => {
+    e.stopPropagation()
+    setRefreshing(true)
+
     generatorRefresh.mutateAsync(gen, {
       onSuccess: () => notifications.show({ message: "Updating generator" }),
       onError: async error => {
         const msg = await getErrorMessage(error)
         notifications.show({ color: "red", message: msg })
-      }
+      },
     })
   }
 
-  const handleEdit = (gen: Generator) => {
+  const handleEdit = (e: MouseEvent<HTMLButtonElement>, gen: Generator) => {
+    e.stopPropagation()
+
     navigate({ to: "/generator/edit/$generatorId", params: { generatorId: gen.id.toString() } })
   }
 
-  const handleDeleteInit = (gen: Generator) => {
+  const handleDeleteInit = (e: MouseEvent<HTMLButtonElement>, gen: Generator) => {
+    e.stopPropagation()
+
     setGeneratorToDelete(gen)
     setCheckedPlaylist(false)
     open()
@@ -117,9 +135,9 @@ export const GeneratorOverview = () => {
                 render: gen => (
                   <div className="flex gap-0 flex-nowrap">
                     <div className="flex-1" />
-                    <ActionIcon onClick={() => handleRefresh(gen)} variant="subtle" color="black" hidden={!gen.playlistId}><LuListRestart className="size-5" /></ActionIcon>
-                    <ActionIcon onClick={() => handleEdit(gen)} variant="subtle" color="black"><LuPencil /></ActionIcon>
-                    <ActionIcon onClick={() => handleDeleteInit(gen)} variant="subtle" color="red"><LuTrash2 /></ActionIcon>
+                    <ActionIcon onClick={(e) => handleRefresh(e, gen)} variant="subtle" color="black" loading={refreshing}><LuListRestart className="size-5" /></ActionIcon>
+                    <ActionIcon onClick={(e) => handleEdit(e, gen)} variant="subtle" color="black"><LuPencil /></ActionIcon>
+                    <ActionIcon onClick={(e) => handleDeleteInit(e, gen)} variant="subtle" color="red"><LuTrash2 /></ActionIcon>
                   </div>
                 )
               },

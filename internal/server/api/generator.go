@@ -28,7 +28,7 @@ func NewGenerator(router fiber.Router, service service.Service) *Generator {
 func (g *Generator) createRoutes() {
 	g.router.Get("/", g.getAll)
 	g.router.Post("/preview", g.preview)
-	g.router.Post("/refesh/:id", g.refresh)
+	g.router.Post("/refresh/:id", g.refresh)
 	g.router.Put("/", g.create)
 	g.router.Post("/:id", g.update)
 	g.router.Delete("/:id", g.delete)
