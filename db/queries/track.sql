@@ -28,6 +28,13 @@ FROM tracks t
 LEFT JOIN playlist_tracks pt ON pt.track_id = t.id
 WHERE pt.playlist_id = $1 AND pt.deleted_at IS NULL;
 
+-- name: TrackGetByGenerator :many
+SELECT t.*
+FROM tracks t
+LEFT JOIN generator_tracks gt ON gt.track_id = t.id
+WHERE gt.generator_id = $1
+ORDER BY t.name;
+
 -- name: TrackGetCreatedFilteredPopulated :many
 SELECT sqlc.embed(t), sqlc.embed(pt), sqlc.embed(p), sqlc.embed(u)
 FROM tracks t

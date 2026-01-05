@@ -93,6 +93,18 @@ func (t *Track) GetByPlaylist(ctx context.Context, playlistID int) ([]*model.Tra
 	return utils.SliceMap(tracks, model.TrackModel), nil
 }
 
+func (t *Track) GetByGenerator(ctx context.Context, generatorID int) ([]*model.Track, error) {
+	tracks, err := t.repo.queries(ctx).TrackGetByGenerator(ctx, int32(generatorID))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("get tracks by generator %d | %w", generatorID, err)
+	}
+
+	return utils.SliceMap(tracks, model.TrackModel), nil
+}
+
 func (t *Track) GetCreatedFiltered(ctx context.Context, filter model.TrackFilter) ([]*model.Track, error) {
 	params := sqlc.TrackGetCreatedFilteredPopulatedParams{
 		Column3:          int32(filter.UserID),

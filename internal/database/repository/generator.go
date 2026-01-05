@@ -34,6 +34,18 @@ func (g *Generator) Get(ctx context.Context, id int) (*model.Generator, error) {
 	return model.GeneratorModel(gen), nil
 }
 
+func (g *Generator) GetAll(ctx context.Context) ([]*model.Generator, error) {
+	gens, err := g.repo.queries(ctx).GeneratorGetAll(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("get all generators %w", err)
+	}
+
+	return utils.SliceMap(gens, model.GeneratorModel), nil
+}
+
 func (g *Generator) GetByUser(ctx context.Context, userID int) ([]*model.Generator, error) {
 	gens, err := g.repo.queries(ctx).GeneratorGetByUser(ctx, int32(userID))
 	if err != nil {
@@ -46,23 +58,6 @@ func (g *Generator) GetByUser(ctx context.Context, userID int) ([]*model.Generat
 	return utils.SliceMap(gens, model.GeneratorModel), nil
 }
 
-func (g *Generator) GetMaintainedPopulated(ctx context.Context) ([]*model.Generator, error) {
-	gens, err := g.repo.queries(ctx).GeneratorGetMaintainedPopulated(ctx)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, fmt.Errorf("get maintained generators populated %w", err)
-	}
-
-	return utils.SliceMap(gens, func(g sqlc.GeneratorGetMaintainedPopulatedRow) *model.Generator {
-		gen := model.GeneratorModel(g.Generator)
-		gen.User = *model.UserModel(g.User)
-
-		return gen
-	}), nil
-}
-
 func (g *Generator) Create(ctx context.Context, gen *model.Generator) error {
 	params, err := json.Marshal(gen.Params)
 	if err != nil {
@@ -70,20 +65,30 @@ func (g *Generator) Create(ctx context.Context, gen *model.Generator) error {
 	}
 
 	id, err := g.repo.queries(ctx).GeneratorCreate(ctx, sqlc.GeneratorCreateParams{
-		UserID:      int32(gen.UserID),
-		Name:        gen.Name,
-		Description: toString(gen.Description),
-		PlaylistID:  toInt(gen.PlaylistID),
-		Maintained:  gen.Maintained,
-		Interval:    toDuration(gen.Interval),
-		Outdated:    gen.Outdated,
-		Parameters:  params,
+		UserID:          int32(gen.UserID),
+		Name:            gen.Name,
+		Description:     toString(gen.Description),
+		PlaylistID:      toInt(gen.PlaylistID),
+		Interval:        toDuration(gen.Interval),
+		SpotifyOutdated: gen.SpotifyOutdated,
+		Parameters:      params,
 	})
 	if err != nil {
 		return fmt.Errorf("create generator %+v | %w", *gen, err)
 	}
 
 	gen.ID = int(id)
+
+	return nil
+}
+
+func (g *Generator) CreateTrackBatch(ctx context.Context, tracks []model.GeneratorTrack) error {
+	if err := g.repo.queries(ctx).GeneratorTrackCreateBatch(ctx, sqlc.GeneratorTrackCreateBatchParams{
+		Column1: utils.SliceMap(tracks, func(t model.GeneratorTrack) int32 { return int32(t.GeneratorID) }),
+		Column2: utils.SliceMap(tracks, func(t model.GeneratorTrack) int32 { return int32(t.TrackID) }),
+	}); err != nil {
+		return fmt.Errorf("create generator track batch %w", err)
+	}
 
 	return nil
 }
@@ -95,14 +100,13 @@ func (g *Generator) Update(ctx context.Context, gen model.Generator) error {
 	}
 
 	if err := g.repo.queries(ctx).GeneratorUpdate(ctx, sqlc.GeneratorUpdateParams{
-		ID:          int32(gen.ID),
-		Name:        toString(gen.Name),
-		Description: toString(gen.Description),
-		PlaylistID:  toInt(gen.PlaylistID),
-		Maintained:  toBool(&gen.Maintained),
-		Interval:    toDuration(gen.Interval),
-		Outdated:    toBool(&gen.Outdated),
-		Parameters:  params,
+		ID:              int32(gen.ID),
+		Name:            toString(gen.Name),
+		Description:     toString(gen.Description),
+		PlaylistID:      toInt(gen.PlaylistID),
+		Interval:        toDuration(gen.Interval),
+		SpotifyOutdated: toBool(&gen.SpotifyOutdated),
+		Parameters:      params,
 	}); err != nil {
 		return fmt.Errorf("update generator %+v | %w", gen, err)
 	}
@@ -113,6 +117,14 @@ func (g *Generator) Update(ctx context.Context, gen model.Generator) error {
 func (g *Generator) Delete(ctx context.Context, genID int) error {
 	if err := g.repo.queries(ctx).GeneratorDelete(ctx, int32(genID)); err != nil {
 		return fmt.Errorf("delete generator %d | %w", genID, err)
+	}
+
+	return nil
+}
+
+func (g *Generator) DeleteTrackByGenerator(ctx context.Context, id int) error {
+	if err := g.repo.queries(ctx).GeneratorTrackDeleteByGenerator(ctx, int32(id)); err != nil {
+		return fmt.Errorf("delete generator track by generator %d | %w", id, err)
 	}
 
 	return nil

@@ -6,20 +6,22 @@ CREATE TABLE generators (
   name TEXT NOT NULL,
   description TEXT,
   playlist_id INTEGER REFERENCES playlists (id),
-  maintained BOOLEAN NOT NULL,
   interval BIGINT,
-  outdated BOOLEAN NOT NULL,
+  spotify_outdated BOOLEAN NOT NULL,
   parameters JSONB,
-  updated_at TIMESTAMPTZ NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL
+);
 
-  CONSTRAINT generators_interval_required_if_maintained CHECK (
-    maintained = false
-    OR interval IS NOT NULL
-  )
+CREATE TABLE generator_tracks (
+  id SERIAL PRIMARY KEY,
+  generator_id INTEGER NOT NULL REFERENCES generators (id) ON DELETE CASCADE,
+  track_id INTEGER NOT NULL REFERENCES tracks (id) ON DELETE CASCADE
 );
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
+DROP TABLE generator_tracks;
+
 DROP TABLE generators;
 -- +goose StatementEnd

@@ -52,19 +52,19 @@ type GeneratorParams struct {
 }
 
 type Generator struct {
-	ID          int
-	UserID      int
-	Name        string
-	Description string
-	PlaylistID  int
-	Maintained  bool
-	Interval    time.Duration
-	Outdated    bool
-	Params      GeneratorParams
-	UpdatedAt   time.Time
+	ID              int
+	UserID          int
+	Name            string
+	Description     string
+	PlaylistID      int
+	Interval        time.Duration
+	SpotifyOutdated bool
+	Params          GeneratorParams
+	UpdatedAt       time.Time
 
 	// Non db fields
-	User User
+	User   User
+	Tracks []Track
 }
 
 func GeneratorModel(g sqlc.Generator) *Generator {
@@ -72,15 +72,20 @@ func GeneratorModel(g sqlc.Generator) *Generator {
 	_ = json.Unmarshal(g.Parameters, &params) // nolint:errcheck // Data controlled by us, it'll be fine, ...right?
 
 	return &Generator{
-		ID:          int(g.ID),
-		UserID:      int(g.UserID),
-		Name:        g.Name,
-		Description: fromString(g.Description),
-		PlaylistID:  fromInt(g.PlaylistID),
-		Maintained:  g.Maintained,
-		Interval:    fromDuration(g.Interval),
-		Outdated:    g.Outdated,
-		Params:      params,
-		UpdatedAt:   g.UpdatedAt.Time,
+		ID:              int(g.ID),
+		UserID:          int(g.UserID),
+		Name:            g.Name,
+		Description:     fromString(g.Description),
+		PlaylistID:      fromInt(g.PlaylistID),
+		Interval:        fromDuration(g.Interval),
+		SpotifyOutdated: g.SpotifyOutdated,
+		Params:          params,
+		UpdatedAt:       g.UpdatedAt.Time,
 	}
+}
+
+type GeneratorTrack struct {
+	ID          int
+	GeneratorID int
+	TrackID     int
 }
