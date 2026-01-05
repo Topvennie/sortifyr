@@ -149,6 +149,10 @@ func (s *Setting) exportTask(ctx context.Context, user model.User, zipFile []byt
 		}
 	}
 
+	if err := task.Manager.RunRecurringByUID(spotifysync.TaskTrackUID, user); err != nil {
+		return err
+	}
+
 	return nil
 }
 
