@@ -13,7 +13,13 @@ type Props = {
 }
 
 export const GeneratorFormFinalize = ({ form, nextStep, prevStep }: Props) => {
+  const [createPlaylist, useCreatePlaylist] = useState(form.getValues().createPlaylist)
   const [interval, setInterval] = useState(form.getValues().intervalDays)
+
+  const handleCreatePlaylistChange = (checked: boolean) => {
+    form.setFieldValue("createPlaylist", checked)
+    useCreatePlaylist(checked)
+  }
 
   const handleIntervalChange = (value: number) => {
     form.setFieldValue("intervalDays", value)
@@ -35,7 +41,7 @@ export const GeneratorFormFinalize = ({ form, nextStep, prevStep }: Props) => {
             <p className="text-sm font-medium">Create Spotify playlist</p>
             <p className="text-muted text-xs">If set to off, the generator only shows a preview.</p>
           </Stack>
-          <Switch color="secondary.1" {...form.getInputProps("createPlaylist")} />
+          <Switch checked={createPlaylist} onChange={e => handleCreatePlaylistChange(e.target.checked)} color="secondary.1" />
         </Group>
 
 

@@ -41,7 +41,7 @@ export const GeneratorOverview = () => {
     setRefreshing(true)
 
     generatorRefresh.mutateAsync(gen, {
-      onSuccess: () => notifications.show({ message: "Updating generator" }),
+      onSuccess: () => notifications.show({ title: "Updating generator", message: "A refresh is required to see the status update" }),
       onError: async error => {
         const msg = await getErrorMessage(error)
         notifications.show({ color: "red", message: msg })
@@ -126,7 +126,7 @@ export const GeneratorOverview = () => {
                 accessor: "spotifyOutdated",
                 title: "Spotify Status",
                 textAlign: "right",
-                render: ({ playlistId, spotifyOutdated }) => playlistId && <Badge color={spotifyOutdated ? "red" : "gray"}>{spotifyOutdated ? "Outdated" : "Up to date"}</Badge>,
+                render: ({ playlistId, spotifyOutdated }) => playlistId && <Badge color={spotifyOutdated ? "red" : "gray"}>{spotifyOutdated ? "Not Synced" : "Synced"}</Badge>,
               },
               {
                 accessor: "actions",
@@ -151,6 +151,7 @@ export const GeneratorOverview = () => {
                     { accessor: "name" },
                   ]}
                   records={tracks}
+                  noRecordsText="No tracks"
                   height={180}
                   className="m-4"
                 />

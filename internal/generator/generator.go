@@ -12,6 +12,7 @@ import (
 	"github.com/topvennie/sortifyr/internal/database/repository"
 	"github.com/topvennie/sortifyr/internal/spotifyapi"
 	"github.com/topvennie/sortifyr/internal/task"
+	"github.com/topvennie/sortifyr/pkg/utils"
 )
 
 type generator struct {
@@ -144,6 +145,7 @@ func (g *generator) Create(ctx context.Context, gen *model.Generator, createPlay
 	return nil
 }
 
+// nolint:gocognit // It's fine
 func (g *generator) Update(ctx context.Context, gen *model.Generator, createPlaylist bool) error {
 	// Get user
 	user, err := g.user.GetByID(ctx, gen.UserID)
@@ -163,13 +165,6 @@ func (g *generator) Update(ctx context.Context, gen *model.Generator, createPlay
 		return fmt.Errorf("gen with id %d not found", gen.ID)
 	}
 
-	// We're going to be very lazy
-	// If the old generator had a playlist, delete it
-	// If the new generator has a playlist, create it
-	// This will sometimes delete and create a playlist after one another
-	// But it makes our lives simpler
-
-	// Delete the old playlist
 	if oldGen.PlaylistID != 0 {
 		playlist, err := g.playlist.Get(ctx, oldGen.PlaylistID)
 		if err != nil {
@@ -179,53 +174,71 @@ func (g *generator) Update(ctx context.Context, gen *model.Generator, createPlay
 			return fmt.Errorf("playlist with id %d not found", oldGen.PlaylistID)
 		}
 
-		// Delete it from our db
-		if err := g.playlist.DeleteUserByUserPlaylist(ctx, model.PlaylistUser{UserID: user.ID, PlaylistID: playlist.ID}); err != nil {
-			return err
-		}
-		// Delete it from Spotify
-		if err := spotifyapi.C.PlaylistDelete(ctx, *user, playlist.SpotifyID); err != nil {
-			return err
+		if createPlaylist {
+			// Delete all tracks
+			tracks, err := g.track.GetByPlaylist(ctx, playlist.ID)
+			if err != nil {
+				return err
+			}
+
+			if err := spotifyapi.C.PlaylistDeleteTrackAll(ctx, *user, playlist.SpotifyID, playlist.SnapshotID, utils.SliceDereference(tracks)); err != nil {
+				return err
+			}
+		} else {
+			// Delete playlist
+			// Delete it from our db
+			if err := g.playlist.DeleteUserByUserPlaylist(ctx, model.PlaylistUser{UserID: user.ID, PlaylistID: playlist.ID}); err != nil {
+				return err
+			}
+			// Delete it from Spotify
+			if err := spotifyapi.C.PlaylistDelete(ctx, *user, playlist.SpotifyID); err != nil {
+				return err
+			}
 		}
 	}
 
 	// Create the new playlist
 	gen.PlaylistID = 0
 	if createPlaylist {
-		// Create playlist in Spotify
-		description := "Created by Sortifyr"
-		if gen.Interval > 0 {
-			days := int(gen.Interval.Nanoseconds() / int64(24*time.Hour))
-			daysStr := strconv.Itoa(days) + "days"
-			if days == 1 {
-				daysStr = "day"
+		if oldGen.PlaylistID == 0 {
+			// Create playlist in Spotify
+			description := "Created by Sortifyr"
+			if gen.Interval > 0 {
+				days := int(gen.Interval.Nanoseconds() / int64(24*time.Hour))
+				daysStr := strconv.Itoa(days) + "days"
+				if days == 1 {
+					daysStr = "day"
+				}
+				description = fmt.Sprintf("Created and maintained (every %s) by Sortifyr", daysStr)
 			}
-			description = fmt.Sprintf("Created and maintained (every %s) by Sortifyr", daysStr)
-		}
-		public := false
-		collaborative := false
+			public := false
+			collaborative := false
 
-		playlist := model.Playlist{
-			OwnerID:       gen.UserID,
-			Name:          gen.Name,
-			Description:   description,
-			Public:        &public,
-			Collaborative: &collaborative,
-		}
+			playlist := model.Playlist{
+				OwnerID:       gen.UserID,
+				Name:          gen.Name,
+				Description:   description,
+				Public:        &public,
+				Collaborative: &collaborative,
+			}
 
-		if err := spotifyapi.C.PlaylistCreate(ctx, *user, &playlist); err != nil {
-			return err
-		}
+			if err := spotifyapi.C.PlaylistCreate(ctx, *user, &playlist); err != nil {
+				return err
+			}
 
-		// Create playlist in db and link to user
-		if err := g.playlist.Create(ctx, &playlist); err != nil {
-			return err
-		}
-		if err := g.playlist.CreateUser(ctx, &model.PlaylistUser{UserID: user.ID, PlaylistID: playlist.ID}); err != nil {
-			return err
-		}
+			// Create playlist in db and link to user
+			if err := g.playlist.Create(ctx, &playlist); err != nil {
+				return err
+			}
+			if err := g.playlist.CreateUser(ctx, &model.PlaylistUser{UserID: user.ID, PlaylistID: playlist.ID}); err != nil {
+				return err
+			}
 
-		gen.PlaylistID = playlist.ID
+			gen.PlaylistID = playlist.ID
+		} else {
+			// Use the old playlist
+			gen.PlaylistID = oldGen.PlaylistID
+		}
 	}
 
 	// Update in database
@@ -270,10 +283,6 @@ func (g *generator) Update(ctx context.Context, gen *model.Generator, createPlay
 }
 
 func (g *generator) Delete(ctx context.Context, user model.User, gen model.Generator, deletePlaylist bool) error {
-	if err := g.generator.Delete(ctx, gen.ID); err != nil {
-		return err
-	}
-
 	if gen.PlaylistID != 0 && deletePlaylist {
 		playlist, err := g.playlist.Get(ctx, gen.PlaylistID)
 		if err != nil {
@@ -290,6 +299,10 @@ func (g *generator) Delete(ctx context.Context, user model.User, gen model.Gener
 		if err := g.playlist.DeleteUserByUserPlaylist(ctx, model.PlaylistUser{UserID: user.ID, PlaylistID: playlist.ID}); err != nil {
 			return err
 		}
+	}
+
+	if err := g.generator.Delete(ctx, gen.ID); err != nil {
+		return err
 	}
 
 	return nil

@@ -6,13 +6,15 @@ import (
 	"github.com/topvennie/sortifyr/pkg/sqlc"
 )
 
+// JSON tags required for the generator repository
+
 type Track struct {
-	ID         int
-	SpotifyID  string
-	Name       string
-	Popularity int
-	DurationMs int
-	UpdatedAt  time.Time
+	ID         int       `json:"id"`
+	SpotifyID  string    `json:"spotify_id"`
+	Name       string    `json:"name"`
+	Popularity int       `json:"popularity"`
+	DurationMs int       `json:"duration_ms"`
+	UpdatedAt  time.Time `json:"updated_at"`
 
 	// Non db fields
 	Artists   []Artist

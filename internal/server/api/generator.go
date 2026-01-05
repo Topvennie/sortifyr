@@ -151,7 +151,7 @@ func (g *Generator) delete(c *fiber.Ctx) error {
 	}
 
 	deletePlaylist := false
-	if v := c.Query("deletePlaylist"); v != "" {
+	if v := c.Query("delete_playlist"); v != "" {
 		if b, err := strconv.ParseBool(v); err == nil {
 			deletePlaylist = b
 		}

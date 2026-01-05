@@ -65,7 +65,7 @@ export const GeneratorForm = ({ generator: initialGenerator }: Props) => {
             burstIntervalDays: 14
           },
           recentWindow: {
-            start: daysAgo(14),
+            start: daysAgo(30),
             end: new Date(),
             minPlays: 2,
             burstIntervalDays: 14

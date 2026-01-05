@@ -101,7 +101,7 @@ export const convertGeneratorSchema = (g: Generator): GeneratorSchema => {
     id: g.id,
     name: g.name,
     description: g.description,
-    createPlaylist: g.playlistId !== 0,
+    createPlaylist: (g.playlistId ?? 0) !== 0,
     intervalDays: g.intervalDays,
     params: { ...g.params },
   }

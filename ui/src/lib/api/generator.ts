@@ -27,7 +27,10 @@ export const useGeneratorRefresh = () => {
 
   return useMutation({
     mutationFn: (generator: Pick<Generator, "id">) => apiPost(`${ENDPOINT}/refresh/${generator.id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["task"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["task"] })
+      queryClient.invalidateQueries({ queryKey: ["generator"] })
+    },
   })
 }
 

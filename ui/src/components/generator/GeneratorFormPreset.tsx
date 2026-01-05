@@ -54,7 +54,7 @@ export const GeneratorFormPreset = ({ form, nextStep, prevStep }: Props) => {
   }
 
   const handleMaxTracksChange = (amount: number) => {
-    form.setFieldValue("params.maxTracks", amount)
+    form.setFieldValue("params.trackAmount", amount)
     setMaxTracks(amount)
   }
 

@@ -76,7 +76,7 @@ func normalizePresetOldTop(params *model.GeneratorParams) {
 			BurstInterval: 24 * 14 * time.Hour, // 14 days
 		},
 		RecentWindow: model.GeneratorWindow{
-			Start:         now.Add(-1 * 24 * 14 * time.Hour), // 14 days ago
+			Start:         now.Add(-1 * 24 * 30 * time.Hour), // 30 days ago
 			End:           now,                               // now
 			MinPlays:      2,
 			BurstInterval: 24 * 14 * time.Hour, // 14 days

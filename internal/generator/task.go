@@ -8,9 +8,11 @@ import (
 
 	"github.com/topvennie/sortifyr/internal/database/model"
 	"github.com/topvennie/sortifyr/internal/spotifyapi"
+	"github.com/topvennie/sortifyr/internal/spotifysync"
 	"github.com/topvennie/sortifyr/internal/task"
 	"github.com/topvennie/sortifyr/pkg/config"
 	"github.com/topvennie/sortifyr/pkg/utils"
+	"go.uber.org/zap"
 )
 
 const taskUID = "task-generator"
@@ -122,6 +124,7 @@ func (g *generator) spotifyStatusOne(ctx context.Context, user model.User, gen *
 		// The user probably deleted it manually
 		gen.PlaylistID = 0
 		gen.SpotifyOutdated = true
+		zap.S().Debug("No playlist")
 	} else {
 		playlist = playlists[idx]
 	}
@@ -138,6 +141,8 @@ func (g *generator) spotifyStatusOne(ctx context.Context, user model.User, gen *
 		slices.SortFunc(gen.Tracks, func(a, b model.Track) int { return a.ID - b.ID })
 
 		gen.SpotifyOutdated = !slices.EqualFunc(playlistTracks, gen.Tracks, func(a *model.Track, b model.Track) bool { return a.Equal(b) })
+		zap.S().Debug("slices euqla")
+		zap.S().Debug(!slices.EqualFunc(playlistTracks, gen.Tracks, func(a *model.Track, b model.Track) bool { return a.Equal(b) }))
 	}
 
 	if err := g.generator.Update(ctx, *gen); err != nil {
@@ -168,8 +173,7 @@ func (g *generator) refresh(ctx context.Context, user model.User, genID int) err
 	slices.SortFunc(dbTracks, func(a, b *model.Track) int { return a.ID - b.ID })
 
 	// Update the db if needed
-	equal := slices.EqualFunc(newTracks, dbTracks, func(a model.Track, b *model.Track) bool { return b.Equal(a) })
-	if !equal {
+	if equal := slices.EqualFunc(newTracks, dbTracks, func(a model.Track, b *model.Track) bool { return b.Equal(a) }); !equal {
 		if err := g.generator.DeleteTrackByGenerator(ctx, gen.ID); err != nil {
 			return err
 		}
@@ -190,21 +194,23 @@ func (g *generator) refresh(ctx context.Context, user model.User, genID int) err
 			return errors.New("db unsyned")
 		}
 
-		playlistTracks, err := g.track.GetByPlaylist(ctx, playlist.ID)
+		// Get the latest playlist tracks
+		playlistTracksAPI, err := spotifyapi.C.PlaylistGetTrackAll(ctx, user, playlist.SpotifyID)
 		if err != nil {
 			return err
 		}
+		playlistTracks := utils.SliceMap(playlistTracksAPI, func(t spotifyapi.Track) model.Track { return t.ToModel() })
 
 		toCreate := []model.Track{}
 		toDelete := []model.Track{}
 		for i := range newTracks {
-			if idx := slices.IndexFunc(playlistTracks, func(t *model.Track) bool { return t.Equal(newTracks[i]) }); idx == -1 {
+			if idx := slices.IndexFunc(playlistTracks, func(t model.Track) bool { return t.Equal(newTracks[i]) }); idx == -1 {
 				toCreate = append(toCreate, newTracks[i])
 			}
 		}
 		for i := range playlistTracks {
 			if idx := slices.IndexFunc(newTracks, func(t model.Track) bool { return playlistTracks[i].Equal(t) }); idx == -1 {
-				toDelete = append(toDelete, *playlistTracks[i])
+				toDelete = append(toDelete, playlistTracks[i])
 			}
 		}
 
@@ -213,6 +219,12 @@ func (g *generator) refresh(ctx context.Context, user model.User, genID int) err
 		}
 		if err := spotifyapi.C.PlaylistPostTrackAll(ctx, user, playlist.SpotifyID, toCreate); err != nil {
 			return err
+		}
+
+		if len(toCreate) > 0 || len(toDelete) > 0 {
+			if err := task.Manager.RunRecurringByUID(spotifysync.TaskPlaylistUID, user); err != nil {
+				return err
+			}
 		}
 	}
 

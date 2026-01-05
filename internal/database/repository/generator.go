@@ -43,11 +43,16 @@ func (g *Generator) GetAll(ctx context.Context) ([]*model.Generator, error) {
 		return nil, fmt.Errorf("get all generators %w", err)
 	}
 
-	return utils.SliceMap(gens, model.GeneratorModel), nil
+	return utils.SliceMap(gens, func(g sqlc.GeneratorGetAllRow) *model.Generator {
+		gen := model.GeneratorModel(g.Generator)
+		gen.User = *model.UserModel(g.User)
+
+		return gen
+	}), nil
 }
 
 func (g *Generator) GetByUserPopulated(ctx context.Context, userID int) ([]*model.Generator, error) {
-	gens, err := g.repo.queries(ctx).GeneratorGetByUserPopulated(ctx, int32(userID))
+	gensDB, err := g.repo.queries(ctx).GeneratorGetByUserPopulated(ctx, int32(userID))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -55,18 +60,22 @@ func (g *Generator) GetByUserPopulated(ctx context.Context, userID int) ([]*mode
 		return nil, fmt.Errorf("get generators by user %d | %w", userID, err)
 	}
 
-	genMap := make(map[int32]*model.Generator)
-	for i := range gens {
-		g, ok := genMap[gens[i].Generator.ID]
-		if !ok {
-			g = model.GeneratorModel(gens[i].Generator)
+	gens := make([]*model.Generator, 0, len(gensDB))
+	for i := range gensDB {
+		gen := model.GeneratorModel(gensDB[i].Generator)
+
+		var tracks []model.Track
+		if len(gensDB[i].Tracks) > 0 {
+			if err := json.Unmarshal(gensDB[i].Tracks, &tracks); err != nil {
+				return nil, fmt.Errorf("unmarshal generator tracks for get generator by user %d | %w", userID, err)
+			}
 		}
 
-		g.Tracks = append(g.Tracks, *model.TrackModel(gens[i].Track))
-		genMap[gens[i].Generator.ID] = g
+		gen.Tracks = tracks
+		gens = append(gens, gen)
 	}
 
-	return utils.MapValues(genMap), nil
+	return gens, nil
 }
 
 func (g *Generator) Create(ctx context.Context, gen *model.Generator) error {
