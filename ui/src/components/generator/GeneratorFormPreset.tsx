@@ -76,12 +76,10 @@ export const GeneratorFormPreset = ({ form, nextStep, prevStep }: Props) => {
         return <Top form={form} />
       case GeneratorPreset.OldTop:
         return <OldTop form={form} />
-      default:
-        return <Custom form={form} />
     }
   }
 
-  const [presetArguments, setPresetArguments] = useState<ReactNode>(getPresetArguments(form.getValues().params?.preset ?? GeneratorPreset.Custom))
+  const [presetArguments, setPresetArguments] = useState<ReactNode>(getPresetArguments(form.getValues().params?.preset ?? GeneratorPreset.Top))
   form.watch("params.preset", ({ value }) => setPresetArguments(getPresetArguments(value as GeneratorPreset)))
 
   // TODO: next give arwning if the preview is not the same as the generator
@@ -201,10 +199,6 @@ const Playlists = ({ form }: { form: UseFormReturnType<GeneratorSchema> }) => {
       <GeneratorPlaylistTree playlists={playlists ?? []} isLoading={isLoading} excluded={excluded} onToggle={handleToggle} />
     </Stack>
   )
-}
-
-const Custom = ({ form }: { form: UseFormReturnType<GeneratorSchema> }) => {
-  return null
 }
 
 const Top = ({ form }: { form: UseFormReturnType<GeneratorSchema> }) => {

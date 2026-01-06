@@ -32,20 +32,6 @@ func (g GeneratorWindow) ToModel() *model.GeneratorWindow {
 	}
 }
 
-type GeneratorPresetCustomParams struct{}
-
-func generatorPresetCustomParamsDTO(params *model.GeneratorPresetCustomParams) *GeneratorPresetCustomParams {
-	if params == nil {
-		return nil
-	}
-
-	return &GeneratorPresetCustomParams{}
-}
-
-func (g GeneratorPresetCustomParams) ToModel() *model.GeneratorPresetCustomParams {
-	return &model.GeneratorPresetCustomParams{}
-}
-
 type GeneratorPresetTopParams struct {
 	Window GeneratorWindow `json:"window"`
 }
@@ -96,7 +82,6 @@ type GeneratorParams struct {
 
 	Preset model.GeneratorPreset `json:"preset" validate:"required"`
 
-	ParamsCustom *GeneratorPresetCustomParams `json:"params_custom,omitzero"`
 	ParamsTop    *GeneratorPresetTopParams    `json:"params_top,omitzero"`
 	ParamsOldTop *GeneratorPresetOldTopParams `json:"params_old_top,omitzero"`
 }
@@ -107,17 +92,12 @@ func generatorParamsDTO(params model.GeneratorParams) GeneratorParams {
 		ExcludedPlaylistIDs: params.ExcludedPlaylistIDs,
 		ExcludedTrackIDs:    params.ExcludedTrackIDs,
 		Preset:              params.Preset,
-		ParamsCustom:        generatorPresetCustomParamsDTO(params.ParamsCustom),
 		ParamsTop:           generatorPresetTopParamsDTO(params.ParamsTop),
 		ParamsOldTop:        generatorPresetOldTopParamsDTO(params.ParamsOldTop),
 	}
 }
 
 func (g GeneratorParams) ToModel() model.GeneratorParams {
-	var paramsCustom *model.GeneratorPresetCustomParams
-	if g.ParamsCustom != nil {
-		paramsCustom = g.ParamsCustom.ToModel()
-	}
 	var paramsTop *model.GeneratorPresetTopParams
 	if g.ParamsTop != nil {
 		paramsTop = g.ParamsTop.ToModel()
@@ -131,7 +111,6 @@ func (g GeneratorParams) ToModel() model.GeneratorParams {
 		ExcludedPlaylistIDs: g.ExcludedPlaylistIDs,
 		ExcludedTrackIDs:    g.ExcludedTrackIDs,
 		Preset:              g.Preset,
-		ParamsCustom:        paramsCustom,
 		ParamsTop:           paramsTop,
 		ParamsOldTop:        paramsOldTop,
 	}

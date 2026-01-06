@@ -107,7 +107,6 @@ export namespace API {
       excluded_playlist_ids?: number[];
       excluded_track_ids?: number[];
       preset: string;
-      params_custom?: {};
       params_top?: {
         window: GeneratorWindow;
       };

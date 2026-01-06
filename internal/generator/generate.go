@@ -21,9 +21,6 @@ func (g *generator) Generate(ctx context.Context, gen *model.Generator) ([]model
 		tracks, err = g.top(ctx, *gen)
 	case model.GeneratorPresetOldTop:
 		tracks, err = g.oldTop(ctx, *gen)
-
-	default:
-		tracks, err = g.custom(*gen)
 	}
 
 	if err != nil {
@@ -36,10 +33,6 @@ func (g *generator) Generate(ctx context.Context, gen *model.Generator) ([]model
 type trackPlayCount struct {
 	track     model.Track
 	playCount int
-}
-
-func (g *generator) custom(gen model.Generator) ([]model.Track, error) {
-	return nil, nil
 }
 
 func (g *generator) top(ctx context.Context, gen model.Generator) ([]model.Track, error) {

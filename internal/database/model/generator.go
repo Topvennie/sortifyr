@@ -10,7 +10,6 @@ import (
 type GeneratorPreset string
 
 const (
-	GeneratorPresetCustom GeneratorPreset = "custom"
 	GeneratorPresetTop    GeneratorPreset = "top"
 	GeneratorPresetOldTop GeneratorPreset = "old_top"
 )
@@ -23,8 +22,6 @@ type GeneratorWindow struct {
 	MinPlays      int           `json:"min_plays"`
 	BurstInterval time.Duration `json:"burst_interval"`
 }
-
-type GeneratorPresetCustomParams struct{}
 
 type GeneratorPresetTopParams struct {
 	Window GeneratorWindow `json:"window"`
@@ -42,7 +39,6 @@ type GeneratorParams struct {
 
 	Preset GeneratorPreset `json:"preset"`
 
-	ParamsCustom *GeneratorPresetCustomParams `json:"params_custom,omitzero"`
 	ParamsTop    *GeneratorPresetTopParams    `json:"params_top,omitzero"`
 	ParamsOldTop *GeneratorPresetOldTopParams `json:"params_old_top,omitzero"`
 }

@@ -47,7 +47,6 @@ export const GeneratorForm = ({ generator: initialGenerator }: Props) => {
         excludedPlaylistIds: [],
         excludedTrackIds: [],
         preset: GeneratorPreset.Top,
-        paramsCustom: {},
         paramsTop: {
           window: {
             start: daysAgo(14),
