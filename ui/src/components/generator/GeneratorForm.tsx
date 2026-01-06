@@ -48,7 +48,6 @@ export const GeneratorForm = ({ generator: initialGenerator }: Props) => {
         excludedTrackIds: [],
         preset: GeneratorPreset.Top,
         paramsCustom: {},
-        paramsForgotten: {},
         paramsTop: {
           window: {
             start: daysAgo(14),

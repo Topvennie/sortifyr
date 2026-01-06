@@ -16,23 +16,15 @@ func normalize(gen *model.Generator) {
 	switch params.Preset {
 	case model.GeneratorPresetCustom:
 		normalizePresetCustom(&params)
-		params.ParamsForgotten = nil
-		params.ParamsTop = nil
-		params.ParamsOldTop = nil
-	case model.GeneratorPresetForgotten:
-		normalizePresetForgotten(&params)
-		params.ParamsCustom = nil
 		params.ParamsTop = nil
 		params.ParamsOldTop = nil
 	case model.GeneratorPresetTop:
 		normalizePresetTop(&params)
 		params.ParamsCustom = nil
-		params.ParamsForgotten = nil
 		params.ParamsOldTop = nil
 	case model.GeneratorPresetOldTop:
 		normalizePresetOldTop(&params)
 		params.ParamsCustom = nil
-		params.ParamsForgotten = nil
 		params.ParamsTop = nil
 	}
 
@@ -40,9 +32,6 @@ func normalize(gen *model.Generator) {
 }
 
 func normalizePresetCustom(params *model.GeneratorParams) {
-}
-
-func normalizePresetForgotten(params *model.GeneratorParams) {
 }
 
 func normalizePresetTop(params *model.GeneratorParams) {

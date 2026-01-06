@@ -108,7 +108,6 @@ export namespace API {
       excluded_track_ids?: number[];
       preset: string;
       params_custom?: {};
-      params_forgotten?: {};
       params_top?: {
         window: GeneratorWindow;
       };

@@ -5,13 +5,11 @@ import { convertTracks, Track } from "./track";
 
 export enum GeneratorPreset {
   Custom = "custom",
-  Forgotten = "forgotten",
   Top = "top",
   OldTop = "old_top"
 }
 export const generatorPresetString: Record<GeneratorPreset, string> = {
   [GeneratorPreset.Custom]: "Custom",
-  [GeneratorPreset.Forgotten]: "Forgotten",
   [GeneratorPreset.Top]: "Top",
   [GeneratorPreset.OldTop]: "Old Top",
 }
@@ -38,7 +36,6 @@ export interface GeneratorParams {
   excludedTrackIds: number[];
   preset: GeneratorPreset;
   paramsCustom?: {};
-  paramsForgotten?: {};
   paramsTop?: {
     window: GeneratorWindow;
   };
@@ -55,7 +52,6 @@ export const convertGeneratorParams = (g: Pick<API.Generator, "params">): Genera
     excludedTrackIds: g.params.excluded_track_ids ?? [],
     preset: g.params.preset as GeneratorPreset,
     paramsCustom: g.params.params_custom,
-    paramsForgotten: g.params.params_forgotten,
     paramsTop: g.params.params_top ? {
       window: convertGeneratorWindow(g.params.params_top.window)
     } : undefined,
@@ -121,7 +117,6 @@ export const generatorParamsSchema = z.object({
   excludedTrackIds: z.array(z.number().positive()),
   preset: z.enum(GeneratorPreset),
   paramsCustom: z.object({}).partial().optional(),
-  paramsForgotten: z.object({}).partial().optional(),
   paramsTop: z.object({
     window: generatorWindowSchema
   }).partial().optional(),

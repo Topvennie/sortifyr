@@ -10,10 +10,9 @@ import (
 type GeneratorPreset string
 
 const (
-	GeneratorPresetCustom    GeneratorPreset = "custom"
-	GeneratorPresetForgotten GeneratorPreset = "forgotten"
-	GeneratorPresetTop       GeneratorPreset = "top"
-	GeneratorPresetOldTop    GeneratorPreset = "old_top"
+	GeneratorPresetCustom GeneratorPreset = "custom"
+	GeneratorPresetTop    GeneratorPreset = "top"
+	GeneratorPresetOldTop GeneratorPreset = "old_top"
 )
 
 // We need json tags because the params are saved as jsonb
@@ -26,8 +25,6 @@ type GeneratorWindow struct {
 }
 
 type GeneratorPresetCustomParams struct{}
-
-type GeneratorPresetForgottenParams struct{}
 
 type GeneratorPresetTopParams struct {
 	Window GeneratorWindow `json:"window"`
@@ -45,10 +42,9 @@ type GeneratorParams struct {
 
 	Preset GeneratorPreset `json:"preset"`
 
-	ParamsCustom    *GeneratorPresetCustomParams    `json:"params_custom,omitzero"`
-	ParamsForgotten *GeneratorPresetForgottenParams `json:"params_forgotten,omitzero"`
-	ParamsTop       *GeneratorPresetTopParams       `json:"params_top,omitzero"`
-	ParamsOldTop    *GeneratorPresetOldTopParams    `json:"params_old_top,omitzero"`
+	ParamsCustom *GeneratorPresetCustomParams `json:"params_custom,omitzero"`
+	ParamsTop    *GeneratorPresetTopParams    `json:"params_top,omitzero"`
+	ParamsOldTop *GeneratorPresetOldTopParams `json:"params_old_top,omitzero"`
 }
 
 type Generator struct {

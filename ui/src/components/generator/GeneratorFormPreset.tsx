@@ -72,8 +72,6 @@ export const GeneratorFormPreset = ({ form, nextStep, prevStep }: Props) => {
 
   const getPresetArguments = (preset: GeneratorPreset) => {
     switch (preset) {
-      case GeneratorPreset.Forgotten:
-        return <Forgotten form={form} />
       case GeneratorPreset.Top:
         return <Top form={form} />
       case GeneratorPreset.OldTop:
@@ -206,10 +204,6 @@ const Playlists = ({ form }: { form: UseFormReturnType<GeneratorSchema> }) => {
 }
 
 const Custom = ({ form }: { form: UseFormReturnType<GeneratorSchema> }) => {
-  return null
-}
-
-const Forgotten = ({ form }: { form: UseFormReturnType<GeneratorSchema> }) => {
   return null
 }
 

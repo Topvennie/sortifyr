@@ -17,8 +17,6 @@ func (g *generator) Generate(ctx context.Context, gen *model.Generator) ([]model
 	normalize(gen)
 
 	switch gen.Params.Preset {
-	case model.GeneratorPresetForgotten:
-		tracks, err = g.forgotten(*gen)
 	case model.GeneratorPresetTop:
 		tracks, err = g.top(ctx, *gen)
 	case model.GeneratorPresetOldTop:
@@ -41,10 +39,6 @@ type trackPlayCount struct {
 }
 
 func (g *generator) custom(gen model.Generator) ([]model.Track, error) {
-	return nil, nil
-}
-
-func (g *generator) forgotten(gen model.Generator) ([]model.Track, error) {
 	return nil, nil
 }
 

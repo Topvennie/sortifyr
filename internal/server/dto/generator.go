@@ -46,20 +46,6 @@ func (g GeneratorPresetCustomParams) ToModel() *model.GeneratorPresetCustomParam
 	return &model.GeneratorPresetCustomParams{}
 }
 
-type GeneratorPresetForgottenParams struct{}
-
-func generatorPresetForgottenParamsDTO(params *model.GeneratorPresetForgottenParams) *GeneratorPresetForgottenParams {
-	if params == nil {
-		return nil
-	}
-
-	return &GeneratorPresetForgottenParams{}
-}
-
-func (g GeneratorPresetForgottenParams) ToModel() *model.GeneratorPresetForgottenParams {
-	return &model.GeneratorPresetForgottenParams{}
-}
-
 type GeneratorPresetTopParams struct {
 	Window GeneratorWindow `json:"window"`
 }
@@ -110,10 +96,9 @@ type GeneratorParams struct {
 
 	Preset model.GeneratorPreset `json:"preset" validate:"required"`
 
-	ParamsCustom    *GeneratorPresetCustomParams    `json:"params_custom,omitzero"`
-	ParamsForgotten *GeneratorPresetForgottenParams `json:"params_forgotten,omitzero"`
-	ParamsTop       *GeneratorPresetTopParams       `json:"params_top,omitzero"`
-	ParamsOldTop    *GeneratorPresetOldTopParams    `json:"params_old_top,omitzero"`
+	ParamsCustom *GeneratorPresetCustomParams `json:"params_custom,omitzero"`
+	ParamsTop    *GeneratorPresetTopParams    `json:"params_top,omitzero"`
+	ParamsOldTop *GeneratorPresetOldTopParams `json:"params_old_top,omitzero"`
 }
 
 func generatorParamsDTO(params model.GeneratorParams) GeneratorParams {
@@ -123,7 +108,6 @@ func generatorParamsDTO(params model.GeneratorParams) GeneratorParams {
 		ExcludedTrackIDs:    params.ExcludedTrackIDs,
 		Preset:              params.Preset,
 		ParamsCustom:        generatorPresetCustomParamsDTO(params.ParamsCustom),
-		ParamsForgotten:     generatorPresetForgottenParamsDTO(params.ParamsForgotten),
 		ParamsTop:           generatorPresetTopParamsDTO(params.ParamsTop),
 		ParamsOldTop:        generatorPresetOldTopParamsDTO(params.ParamsOldTop),
 	}
@@ -133,10 +117,6 @@ func (g GeneratorParams) ToModel() model.GeneratorParams {
 	var paramsCustom *model.GeneratorPresetCustomParams
 	if g.ParamsCustom != nil {
 		paramsCustom = g.ParamsCustom.ToModel()
-	}
-	var paramsForgotten *model.GeneratorPresetForgottenParams
-	if g.ParamsForgotten != nil {
-		paramsForgotten = g.ParamsForgotten.ToModel()
 	}
 	var paramsTop *model.GeneratorPresetTopParams
 	if g.ParamsTop != nil {
@@ -152,7 +132,6 @@ func (g GeneratorParams) ToModel() model.GeneratorParams {
 		ExcludedTrackIDs:    g.ExcludedTrackIDs,
 		Preset:              g.Preset,
 		ParamsCustom:        paramsCustom,
-		ParamsForgotten:     paramsForgotten,
 		ParamsTop:           paramsTop,
 		ParamsOldTop:        paramsOldTop,
 	}
