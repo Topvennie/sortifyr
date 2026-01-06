@@ -16,7 +16,7 @@ import (
 	"github.com/topvennie/sortifyr/pkg/storage"
 )
 
-func UriToID(uri string) string {
+func URIToID(uri string) string {
 	parts := strings.Split(uri, ":")
 	if len(parts) != 3 {
 		return ""

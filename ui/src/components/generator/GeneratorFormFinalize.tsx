@@ -13,12 +13,12 @@ type Props = {
 }
 
 export const GeneratorFormFinalize = ({ form, nextStep, prevStep }: Props) => {
-  const [createPlaylist, useCreatePlaylist] = useState(form.getValues().createPlaylist)
+  const [createPlaylist, setCreatePlaylist] = useState(form.getValues().createPlaylist)
   const [interval, setInterval] = useState(form.getValues().intervalDays)
 
   const handleCreatePlaylistChange = (checked: boolean) => {
     form.setFieldValue("createPlaylist", checked)
-    useCreatePlaylist(checked)
+    setCreatePlaylist(checked)
   }
 
   const handleIntervalChange = (value: number) => {

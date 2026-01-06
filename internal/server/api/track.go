@@ -42,7 +42,7 @@ func (r *Track) getAllByID(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	tracks, err := r.track.GetByIds(c.Context(), p.IDs)
+	tracks, err := r.track.GetByIDs(c.Context(), p.IDs)
 	if err != nil {
 		return err
 	}

@@ -26,7 +26,7 @@ export const GeneratorFormTrack = ({ form, nextStep, prevStep }: Props) => {
     const values = form.getValues()
     generatorPreview(values)
     setParams(values.params)
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [opened, { open, close }] = useDisclosure()
   const handleNextInit = () => {

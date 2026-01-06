@@ -92,7 +92,7 @@ func (e exportTaskTrack) toHistory(userID int) *model.History {
 		PlayedAt: e.StoppedAt.Add(time.Duration(-1*e.MsPlayed) * time.Millisecond),
 		Skipped:  &e.Skipped,
 		Track: model.Track{
-			SpotifyID: spotifysync.UriToID(e.SpotifyTrackURI),
+			SpotifyID: spotifysync.URIToID(e.SpotifyTrackURI),
 		},
 	}
 }

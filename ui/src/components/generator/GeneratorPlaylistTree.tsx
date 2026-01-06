@@ -74,7 +74,7 @@ const TreeNode = ({ directory, level, excluded, onToggle }: TreeNodeProps) => {
     if (filtered.length === 0) return true
     if (filtered.length === playlistsIds.length) return false
     return null
-  }, [excluded])
+  }, [excluded, playlistsIds])
 
   return (
     <Stack gap={2}>

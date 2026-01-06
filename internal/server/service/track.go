@@ -26,7 +26,7 @@ func (s *Service) NewTrack() *Track {
 	}
 }
 
-func (t *Track) GetByIds(ctx context.Context, trackIDs []int) ([]dto.Track, error) {
+func (t *Track) GetByIDs(ctx context.Context, trackIDs []int) ([]dto.Track, error) {
 	tracks, err := t.track.GetAllByID(ctx, trackIDs)
 	if err != nil {
 		zap.S().Error(err)
